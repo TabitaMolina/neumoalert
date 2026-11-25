@@ -1,0 +1,20 @@
+# Entorno virtual Python (NUNCA subir a GitHub)
+.venv/
+venv/
+env/
+
+# Cachés de Python y Jupyter
+__pycache__/
+*.py[cod]
+*.pyo
+.ipynb_checkpoints/
+
+# Base de datos local y archivos subidos en pruebas
+*.db
+*.sqlite3
+neumoalert_uploads/
+
+# Sistema operativo y editor
+.DS_Store
+Thumbs.db
+.vscode/

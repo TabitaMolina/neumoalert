@@ -1,0 +1,407 @@
+{
+  "random_forest_clinico": {
+    "n_total_dataset": 2500,
+    "n_excluidos_posible": 82,
+    "n_train": 1934,
+    "n_test": 484,
+    "prevalencia_rx_alterada": 0.2986,
+    "accuracy": 0.8595,
+    "precision": 0.7619,
+    "recall": 0.7724,
+    "f1": 0.7671,
+    "roc_auc": 0.9011,
+    "cv_roc_auc_mean": 0.9355,
+    "cv_recall_mean": 0.8354,
+    "confusion_matrix": [
+      [
+        304,
+        35
+      ],
+      [
+        33,
+        112
+      ]
+    ],
+    "labels": [
+      "Sin neumonía (0)",
+      "RxT alterada (1)"
+    ],
+    "feature_importances": [
+      {
+        "feature": "sat_o2",
+        "label": "Saturación de oxígeno (SatO₂ %)",
+        "importance": 0.2512
+      },
+      {
+        "feature": "puntaje_heckerling",
+        "label": "Puntaje de Heckerling (0 a 5)",
+        "importance": 0.1849
+      },
+      {
+        "feature": "crepitantes",
+        "label": "Crepitaciones en auscultación",
+        "importance": 0.104
+      },
+      {
+        "feature": "temperatura",
+        "label": "Temperatura axilar (°C)",
+        "importance": 0.0811
+      },
+      {
+        "feature": "frecuencia_respiratoria",
+        "label": "Frecuencia respiratoria (FR rpm)",
+        "importance": 0.0777
+      },
+      {
+        "feature": "edad",
+        "label": "Edad (años)",
+        "importance": 0.0648
+      },
+      {
+        "feature": "murmullo_disminuido",
+        "label": "Murmullo disminuido localizado",
+        "importance": 0.0463
+      },
+      {
+        "feature": "frecuencia_cardiaca",
+        "label": "Frecuencia cardíaca (FC lpm)",
+        "importance": 0.043
+      },
+      {
+        "feature": "rinorrea_odinofagia",
+        "label": "Rinorrea / dolor de garganta (sugiere resfrío)",
+        "importance": 0.0369
+      },
+      {
+        "feature": "dias_evolucion",
+        "label": "Días de evolución",
+        "importance": 0.0216
+      },
+      {
+        "feature": "antipiretico_6h",
+        "label": "Antipirético últimas 6 h (puede ocultar fiebre)",
+        "importance": 0.0158
+      },
+      {
+        "feature": "asma",
+        "label": "Antecedente de asma",
+        "importance": 0.014
+      },
+      {
+        "feature": "matidez",
+        "label": "Matidez a la percusión",
+        "importance": 0.0136
+      },
+      {
+        "feature": "ausencia_asma",
+        "label": "Ausencia de asma",
+        "importance": 0.0135
+      },
+      {
+        "feature": "compromiso_conciencia",
+        "label": "Compromiso de conciencia",
+        "importance": 0.0065
+      },
+      {
+        "feature": "egofonia",
+        "label": "Egofonía",
+        "importance": 0.0057
+      },
+      {
+        "feature": "sexo",
+        "label": "Sexo",
+        "importance": 0.0045
+      },
+      {
+        "feature": "soplo_tubarico",
+        "label": "Soplo tubárico",
+        "importance": 0.0042
+      },
+      {
+        "feature": "epoc",
+        "label": "EPOC",
+        "importance": 0.004
+      },
+      {
+        "feature": "insuficiencia_cardiaca",
+        "label": "Insuficiencia cardíaca (ICC)",
+        "importance": 0.0039
+      },
+      {
+        "feature": "inmunosupresion",
+        "label": "Inmunosupresión",
+        "importance": 0.0018
+      },
+      {
+        "feature": "demencia",
+        "label": "Demencia",
+        "importance": 0.0007
+      },
+      {
+        "feature": "otra_enf_pulmonar",
+        "label": "Otra enfermedad pulmonar",
+        "importance": 0.0005
+      }
+    ],
+    "comparacion_modelos": [
+      {
+        "nombre": "Puntaje de Heckerling solo (1990)",
+        "accuracy": 0.8182,
+        "precision": 0.7176,
+        "recall": 0.6483,
+        "f1": 0.6812,
+        "roc_auc": 0.8515
+      },
+      {
+        "nombre": "Regresión Logística (Ficha completa)",
+        "accuracy": 0.8574,
+        "precision": 0.7676,
+        "recall": 0.7517,
+        "f1": 0.7596,
+        "roc_auc": 0.9036
+      },
+      {
+        "nombre": "Random Forest (Heckerling + Datos extra)",
+        "accuracy": 0.8595,
+        "precision": 0.7619,
+        "recall": 0.7724,
+        "f1": 0.7671,
+        "roc_auc": 0.9011
+      }
+    ],
+    "tabla_heckerling": [
+      {
+        "puntaje": 0,
+        "pacientes": 146,
+        "pct_alterada": 4.8
+      },
+      {
+        "puntaje": 1,
+        "pacientes": 1006,
+        "pct_alterada": 6.2
+      },
+      {
+        "puntaje": 2,
+        "pacientes": 629,
+        "pct_alterada": 23.4
+      },
+      {
+        "puntaje": 3,
+        "pacientes": 354,
+        "pct_alterada": 53.1
+      },
+      {
+        "puntaje": 4,
+        "pacientes": 247,
+        "pct_alterada": 84.6
+      },
+      {
+        "puntaje": 5,
+        "pacientes": 118,
+        "pct_alterada": 92.4
+      }
+    ]
+  },
+  "nlp_informes_rx": {
+    "n_total": 1000,
+    "n_train": 800,
+    "n_test": 200,
+    "accuracy": 0.955,
+    "f1_macro": 0.9551,
+    "recall_macro": 0.955,
+    "cv_f1_macro_mean": 0.9411,
+    "classes": [
+      "Sin neumonía",
+      "Posible",
+      "Probable",
+      "Definitiva"
+    ],
+    "confusion_matrix": [
+      [
+        48,
+        2,
+        0,
+        0
+      ],
+      [
+        0,
+        47,
+        3,
+        0
+      ],
+      [
+        0,
+        0,
+        47,
+        3
+      ],
+      [
+        0,
+        0,
+        1,
+        49
+      ]
+    ],
+    "per_class": {
+      "Sin neumonía": {
+        "precision": 1.0,
+        "recall": 0.96,
+        "f1": 0.9796
+      },
+      "Posible": {
+        "precision": 0.9592,
+        "recall": 0.94,
+        "f1": 0.9495
+      },
+      "Probable": {
+        "precision": 0.9216,
+        "recall": 0.94,
+        "f1": 0.9307
+      },
+      "Definitiva": {
+        "precision": 0.9423,
+        "recall": 0.98,
+        "f1": 0.9608
+      }
+    },
+    "top_terms": {
+      "Sin neumonía": [
+        {
+          "termino": "ni",
+          "peso": 1.311
+        },
+        {
+          "termino": "evidencia de",
+          "peso": 1.226
+        },
+        {
+          "termino": "sin evidencia",
+          "peso": 1.226
+        },
+        {
+          "termino": "sin evidencia de",
+          "peso": 1.226
+        },
+        {
+          "termino": "sin",
+          "peso": 1.063
+        },
+        {
+          "termino": "evidencia de neumonía",
+          "peso": 0.998
+        },
+        {
+          "termino": "evidencia",
+          "peso": 0.949
+        },
+        {
+          "termino": "consolidaciones",
+          "peso": 0.867
+        }
+      ],
+      "Posible": [
+        {
+          "termino": "posible",
+          "peso": 1.22
+        },
+        {
+          "termino": "inespecífico",
+          "peso": 1.009
+        },
+        {
+          "termino": "tenue",
+          "peso": 1.008
+        },
+        {
+          "termino": "inicial",
+          "peso": 0.985
+        },
+        {
+          "termino": "dudosa",
+          "peso": 0.976
+        },
+        {
+          "termino": "no",
+          "peso": 0.828
+        },
+        {
+          "termino": "no se",
+          "peso": 0.828
+        },
+        {
+          "termino": "inspiración",
+          "peso": 0.697
+        }
+      ],
+      "Probable": [
+        {
+          "termino": "probablemente",
+          "peso": 1.145
+        },
+        {
+          "termino": "focal",
+          "peso": 1.14
+        },
+        {
+          "termino": "probable",
+          "peso": 1.125
+        },
+        {
+          "termino": "focal en",
+          "peso": 1.056
+        },
+        {
+          "termino": "que",
+          "peso": 0.896
+        },
+        {
+          "termino": "hallazgos que probablemente",
+          "peso": 0.787
+        },
+        {
+          "termino": "diagnóstica hallazgos",
+          "peso": 0.787
+        },
+        {
+          "termino": "impresión diagnóstica hallazgos",
+          "peso": 0.787
+        }
+      ],
+      "Definitiva": [
+        {
+          "termino": "inequívoca",
+          "peso": 1.148
+        },
+        {
+          "termino": "alveolar",
+          "peso": 1.106
+        },
+        {
+          "termino": "infiltrado neumónico",
+          "peso": 0.775
+        },
+        {
+          "termino": "alveolar confluente",
+          "peso": 0.749
+        },
+        {
+          "termino": "del contorno diafragmático",
+          "peso": 0.749
+        },
+        {
+          "termino": "borramiento del contorno",
+          "peso": 0.749
+        },
+        {
+          "termino": "contorno diafragmático",
+          "peso": 0.749
+        },
+        {
+          "termino": "contorno",
+          "peso": 0.749
+        }
+      ]
+    }
+  },
+  "nota_academica": "Dataset clínico sintético calibrado con el Puntaje de Heckerling (Ann Intern Med, 1990) y predictores de Moore et al. (Eur Respir J, 2017), estructurado para recolectar y reentrenar con fichas reales de urgencia chilena."
+}

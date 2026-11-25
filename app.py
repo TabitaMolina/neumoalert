@@ -231,10 +231,16 @@ PRESETS = {
 }
 
 
+def generar_nuevo_rut_cb() -> None:
+    st.session_state["f_rut"] = rut_aleatorio()
+
+
 def init_form_state() -> None:
     if "f_rut" not in st.session_state:
         st.session_state["f_rut"] = rut_aleatorio()
         apply_preset("paracetamol")
+    elif st.session_state.pop("regenerar_rut", False):
+        st.session_state["f_rut"] = rut_aleatorio()
 
 
 def apply_preset(key: str) -> None:
@@ -392,9 +398,7 @@ if pagina == "🏠 Evaluar Paciente":
                 rut_val = st.text_input("RUT (ficticio)", key="f_rut")
             with id2:
                 st.markdown("<div style='height:1.72rem;'></div>", unsafe_allow_html=True)
-                if st.button("🎲 Nuevo", width="stretch", help="Generar un RUT chileno ficticio válido"):
-                    st.session_state["f_rut"] = rut_aleatorio()
-                    st.rerun()
+                st.button("🎲 Nuevo", width="stretch", on_click=generar_nuevo_rut_cb, help="Generar un RUT chileno ficticio válido")
             with id3:
                 edad = st.number_input("Edad", min_value=18, max_value=105, key="f_edad")
             with id4:
@@ -742,7 +746,7 @@ if pagina == "🏠 Evaluar Paciente":
                                 )
                             )
                         st.success(f"✅ Paciente **{rut_clean}** guardado en urgencias (Prioridad {fusion['prioridad']}).")
-                        st.session_state["f_rut"] = rut_aleatorio()
+                        st.session_state["regenerar_rut"] = True
                     except SQLAlchemyError as exc:
                         st.error(f"No se pudo guardar (puede que el RUT ya exista). Haz clic en '🎲 Nuevo'. Detalle: {exc}")
 

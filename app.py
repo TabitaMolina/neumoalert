@@ -235,7 +235,45 @@ def generar_nuevo_rut_cb() -> None:
     st.session_state["f_rut"] = rut_aleatorio()
 
 
+def limpiar_formulario_cb() -> None:
+    """Deja todas las casillas completamente en blanco, borra Rx/PDF y reinicia el panel."""
+    st.session_state["f_rut"] = ""
+    st.session_state["f_edad"] = None
+    st.session_state["f_sexo"] = None
+    st.session_state["f_dias_evolucion"] = None
+    st.session_state["f_temperatura"] = None
+    st.session_state["f_frecuencia_cardiaca"] = None
+    st.session_state["f_crepitantes"] = False
+    st.session_state["f_murmullo_disminuido"] = False
+    st.session_state["f_asma"] = False
+    st.session_state["f_sat_o2"] = None
+    st.session_state["f_frecuencia_respiratoria"] = None
+    st.session_state["f_rinorrea_odinofagia"] = False
+    st.session_state["f_antipiretico_6h"] = False
+    st.session_state["f_compromiso_conciencia"] = False
+    st.session_state["f_matidez"] = False
+    st.session_state["f_egofonia"] = False
+    st.session_state["f_soplo_tubarico"] = False
+    st.session_state["f_epoc"] = False
+    st.session_state["f_otra_enf_pulmonar"] = False
+    st.session_state["f_insuficiencia_cardiaca"] = False
+    st.session_state["f_inmunosupresion"] = False
+    st.session_state["f_demencia"] = False
+    st.session_state["f_usar_slider_cnn"] = False
+    st.session_state["f_cnn_pct"] = 0
+    st.session_state["f_modo"] = "Antes del informe (Triage: Ficha + Radiografía)"
+    st.session_state["f_fuente_pdf"] = "Sin informe por ahora"
+    st.session_state["f_texto_libre"] = ""
+    st.session_state["f_nonce"] = st.session_state.get("f_nonce", 0) + 1
+
+
 def init_form_state() -> None:
+    if "f_nonce" not in st.session_state:
+        st.session_state["f_nonce"] = 0
+    if "f_texto_libre" not in st.session_state:
+        st.session_state["f_texto_libre"] = ""
+    if "f_usar_slider_cnn" not in st.session_state:
+        st.session_state["f_usar_slider_cnn"] = not cnn_status["available"]
     if "f_rut" not in st.session_state:
         st.session_state["f_rut"] = rut_aleatorio()
         apply_preset("paracetamol")
@@ -247,7 +285,11 @@ def apply_preset(key: str) -> None:
     p = PRESETS[key]
     for k, v in p.items():
         st.session_state[f"f_{k}"] = v
+    if not st.session_state.get("f_rut"):
+        st.session_state["f_rut"] = rut_aleatorio()
+    st.session_state["f_usar_slider_cnn"] = not cnn_status["available"]
     st.session_state["f_fuente_pdf"] = "Informe de ejemplo"
+    st.session_state["f_texto_libre"] = ""
 
 
 init_form_state()
@@ -368,46 +410,72 @@ st.markdown(
 # PANTALLA 1: EVALUAR PACIENTE (SÚPER INTUITIVA Y GUIADA)
 # ============================================================
 if pagina == "🏠 Evaluar Paciente":
-    st.markdown("#### Prueba rápida con un clic *(o completa tus propios datos abajo)*")
-    b1, b2, b3, b4 = st.columns(4)
-    if b1.button("🔴 Neumonía grave (5/5)", width="stretch"):
-        apply_preset("grave")
-        st.rerun()
-    if b2.button("🟡 Tomó paracetamol (oculta fiebre)", width="stretch"):
-        apply_preset("paracetamol")
-        st.rerun()
-    if b3.button("🟢 Resfrío común (1/5)", width="stretch"):
-        apply_preset("resfrio")
-        st.rerun()
-    if b4.button("⚡ Discrepancia (Rx vs Informe)", width="stretch"):
-        apply_preset("discrepancia")
-        st.rerun()
+    st.markdown("#### Prueba rápida con un clic")
+    b1, b2, b3, b4, b5 = st.columns([1.05, 1.25, 1.0, 1.15, 0.85])
+    b1.button("🔴 Neumonía grave (5/5)", width="stretch", on_click=apply_preset, args=("grave",))
+    b2.button("🟡 Tomó paracetamol (oculta fiebre)", width="stretch", on_click=apply_preset, args=("paracetamol",))
+    b3.button("🟢 Resfrío común (1/5)", width="stretch", on_click=apply_preset, args=("resfrio",))
+    b4.button("⚡ Discrepancia (Rx vs Informe)", width="stretch", on_click=apply_preset, args=("discrepancia",))
+    b5.button("🧹 Limpiar todo", width="stretch", on_click=limpiar_formulario_cb, help="Reinicia todos los campos, radiografías y PDF")
 
     st.markdown("<div style='height:0.35rem;'></div>", unsafe_allow_html=True)
 
     col_form, col_result = st.columns([1.22, 1.0], gap="large")
+    nonce = st.session_state.get("f_nonce", 0)
 
-    # ---------------- COLUMNA IZQUIERDA: ENTRADA GUIADA EN 2 PESTAÑAS ----------------
+    # ---------------- COLUMNA IZQUIERDA: RADIOGRAFÍA VISIBLE + 2 PESTAÑAS ----------------
     with col_form:
-        tab1, tab2 = st.tabs(["1️⃣ Ficha del Médico (Heckerling)", "2️⃣ Radiografía e Informe PDF"])
+        st.markdown("##### 🩻 Radiografía de tórax *(Red Neuronal CNN)*")
+        rx_c1, rx_c2 = st.columns(2)
+        with rx_c1:
+            rx_file = st.file_uploader("Subir radiografía actual (JPG, PNG o DICOM)", type=["jpg", "jpeg", "png", "dcm"], key=f"rx_actual_up_{nonce}")
+        with rx_c2:
+            rx_antigua = st.file_uploader("Radiografía antigua (opcional)", type=["jpg", "jpeg", "png", "dcm"], key=f"rx_antigua_up_{nonce}")
+
+        if rx_file is not None or rx_antigua is not None:
+            p_c1, p_c2 = st.columns(2)
+            with p_c1:
+                if rx_file is not None:
+                    if rx_file.name.lower().endswith((".jpg", ".jpeg", ".png")):
+                        st.image(rx_file, caption=f"Rx actual: {rx_file.name}", width="stretch")
+                    else:
+                        st.info(f"Archivo DICOM cargado: {rx_file.name}")
+            with p_c2:
+                if rx_antigua is not None:
+                    if rx_antigua.name.lower().endswith((".jpg", ".jpeg", ".png")):
+                        st.image(rx_antigua, caption=f"Rx antigua: {rx_antigua.name}", width="stretch")
+                    else:
+                        st.info(f"Archivo DICOM antiguo: {rx_antigua.name}")
+
+        usar_slider_cnn = st.checkbox(
+            "Ingresar/simular porcentaje de la Red Neuronal (CNN)",
+            key="f_usar_slider_cnn",
+            help="Mientras se enchufa el archivo .keras/.pt de Sebastián, puedes ingresar el % que entrega su modelo en Colab.",
+        )
+        cnn_manual_prob = None
+        if usar_slider_cnn:
+            cnn_pct = st.slider("Probabilidad de la Red Neuronal (CNN) (%)", 0, 100, key="f_cnn_pct")
+            cnn_manual_prob = cnn_pct / 100.0
+
+        tab1, tab2 = st.tabs(["1️⃣ Ficha del Médico (Heckerling)", "2️⃣ Informe del Radiólogo (PDF / NLP)"])
 
         with tab1:
             # Identificación básica
             id1, id2, id3, id4 = st.columns([1.45, 0.75, 0.85, 0.85])
             with id1:
-                rut_val = st.text_input("RUT (ficticio)", key="f_rut")
+                rut_val = st.text_input("RUT (ficticio)", key="f_rut", placeholder="Ej. 26455629-8")
             with id2:
                 st.markdown("<div style='height:1.72rem;'></div>", unsafe_allow_html=True)
                 st.button("🎲 Nuevo", width="stretch", on_click=generar_nuevo_rut_cb, help="Generar un RUT chileno ficticio válido")
             with id3:
-                edad = st.number_input("Edad", min_value=18, max_value=105, key="f_edad")
+                edad = st.number_input("Edad", min_value=18, max_value=105, step=1, placeholder="Ej. 45", key="f_edad")
             with id4:
-                sexo = st.selectbox("Sexo", ["F", "M"], key="f_sexo")
+                sexo = st.selectbox("Sexo", ["F", "M"], placeholder="Elegir...", key="f_sexo")
 
             # Criterios de ingreso (Sección A) compactos
             with st.expander("📋 Criterios de ingreso al protocolo (Sección A — deben cumplirse los 3)", expanded=False):
                 ia1, ia2, ia3 = st.columns(3)
-                c_adulto = ia1.checkbox("18 años o más", value=edad >= 18)
+                c_adulto = ia1.checkbox("18 años o más", value=(edad is not None and edad >= 18))
                 c_sint = ia2.checkbox("Síntoma resp. < 14 días o fiebre", value=True)
                 c_rx = ia3.checkbox("Se tomará radiografía (RxT)", value=True)
                 if not (c_adulto and c_sint and c_rx):
@@ -416,40 +484,51 @@ if pagina == "🏠 Evaluar Paciente":
             st.markdown("##### C. Los 5 criterios del Puntaje de Heckerling *(1 punto por cada Sí)*")
             h1, h2 = st.columns(2)
             with h1:
-                temperatura = st.number_input("1. Temperatura axilar (°C) — suma si > 37,8", 35.0, 42.0, step=0.1, key="f_temperatura")
+                temperatura = st.number_input("1. Temperatura axilar (°C) — suma si > 37,8", min_value=35.0, max_value=42.0, step=0.1, placeholder="Ej. 37.5", key="f_temperatura")
                 crepitantes = st.checkbox("3. Crepitaciones al auscultar", key="f_crepitantes", help="Ruidos cortos tipo velcro que no desaparecen al toser")
                 asma = st.checkbox("5. Tiene diagnóstico de Asma *(NO tener asma suma 1 pt)*", key="f_asma")
             with h2:
-                frecuencia_cardiaca = st.number_input("2. Frecuencia cardíaca (lpm) — suma si > 100", 40, 180, key="f_frecuencia_cardiaca")
+                frecuencia_cardiaca = st.number_input("2. Frecuencia cardíaca (lpm) — suma si > 100", min_value=40, max_value=180, step=1, placeholder="Ej. 90", key="f_frecuencia_cardiaca")
                 murmullo_disminuido = st.checkbox("4. Murmullo disminuido localizado", key="f_murmullo_disminuido", help="El aire se escucha entrar menos en una zona")
 
             # Cálculo inmediato del Puntaje Heckerling para mostrar medidor vivo ahí mismo
-            pt_heck = (
-                int(temperatura > 37.8)
-                + int(frecuencia_cardiaca > 100)
-                + int(bool(crepitantes))
-                + int(bool(murmullo_disminuido))
-                + int(not bool(asma))
-            )
-            ref_h = HECKERLING_REF_TABLE[pt_heck]
-            st.markdown(
-                f"""
-            <div class="heck-banner">
-                <b>Puntaje de Heckerling actual: {pt_heck} / 5</b> · <span>{ref_h['zona']}</span><br>
-                <small style="color:#334155;">{ref_h['detalle']}</small>
-            </div>
-            """,
-                unsafe_allow_html=True,
-            )
+            if temperatura is not None and frecuencia_cardiaca is not None:
+                pt_heck = (
+                    int(temperatura > 37.8)
+                    + int(frecuencia_cardiaca > 100)
+                    + int(bool(crepitantes))
+                    + int(bool(murmullo_disminuido))
+                    + int(not bool(asma))
+                )
+                ref_h = HECKERLING_REF_TABLE[pt_heck]
+                st.markdown(
+                    f"""
+                <div class="heck-banner">
+                    <b>Puntaje de Heckerling actual: {pt_heck} / 5</b> · <span>{ref_h['zona']}</span><br>
+                    <small style="color:#334155;">{ref_h['detalle']}</small>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    """
+                <div class="heck-banner" style="background:#f8fafc;border-color:#cbd5e1;border-left-color:#94a3b8;">
+                    <b>Puntaje de Heckerling: pendiente</b><br>
+                    <small style="color:#475569;">Ingresa Temperatura y Frecuencia cardíaca para calcular el puntaje (0 a 5).</small>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
 
             st.markdown("##### D. Datos adicionales clave del médico *(complementan a Heckerling)*")
             d1, d2, d3 = st.columns(3)
             with d1:
-                sat_o2 = st.number_input("Saturación O₂ (%)", 60.0, 100.0, step=1.0, key="f_sat_o2")
+                sat_o2 = st.number_input("Saturación O₂ (%)", min_value=60.0, max_value=100.0, step=1.0, placeholder="Ej. 96", key="f_sat_o2")
             with d2:
-                fr = st.number_input("Frec. Respiratoria (rpm)", 8, 55, key="f_frecuencia_respiratoria")
+                fr = st.number_input("Frec. Respiratoria (rpm)", min_value=8, max_value=55, step=1, placeholder="Ej. 20", key="f_frecuencia_respiratoria")
             with d3:
-                dias_evol = st.number_input("Días con síntomas", 1, 14, key="f_dias_evolucion")
+                dias_evol = st.number_input("Días con síntomas", min_value=1, max_value=14, step=1, placeholder="Ej. 3", key="f_dias_evolucion")
 
             ex1, ex2, ex3 = st.columns(3)
             with ex1:
@@ -486,20 +565,7 @@ if pagina == "🏠 Evaluar Paciente":
                 horizontal=True,
             )
 
-            st.markdown("##### 🩻 Radiografía de tórax (Red Neuronal CNN de Sebastián)")
-            rx_file = st.file_uploader("Subir imagen de radiografía (opcional para probar)", type=["jpg", "jpeg", "png", "dcm"])
-            usar_slider_cnn = st.checkbox(
-                "Ingresar/simular porcentaje de la Red Neuronal (CNN)",
-                value=not cnn_status["available"],
-                help="Mientras se enchufa el archivo .keras/.pt de Sebastián, puedes ingresar el % que entrega su modelo en Colab.",
-            )
-            cnn_manual_prob = None
-            if usar_slider_cnn:
-                cnn_pct = st.slider("Probabilidad que arroja la Red Neuronal (CNN) (%)", 0, 100, key="f_cnn_pct")
-                cnn_manual_prob = cnn_pct / 100.0
-
-            st.divider()
-            st.markdown("##### 📄 Informe del radiólogo en PDF (Lectura NLP en 4 categorías)")
+            st.markdown("##### 📄 Informe del radiólogo en PDF *(Lectura NLP en 4 categorías)*")
             fuente_pdf = st.radio(
                 "¿Qué informe quieres analizar?",
                 ["Informe de ejemplo", "Subir un PDF propio", "Sin informe por ahora"],
@@ -524,7 +590,7 @@ if pagina == "🏠 Evaluar Paciente":
                     )
                     pdf_bytes = (SAMPLE_PDF_DIR / pdf_name).read_bytes()
             elif fuente_pdf == "Subir un PDF propio":
-                pdf_up = st.file_uploader("Selecciona tu archivo PDF", type=["pdf"])
+                pdf_up = st.file_uploader("Selecciona tu archivo PDF", type=["pdf"], key=f"pdf_up_{nonce}")
                 if pdf_up is not None:
                     pdf_bytes = pdf_up.getvalue()
                     pdf_name = pdf_up.name
@@ -532,23 +598,30 @@ if pagina == "🏠 Evaluar Paciente":
             texto_libre = st.text_area(
                 "O pega aquí el texto del informe (opcional)",
                 height=72,
+                key="f_texto_libre",
                 placeholder="Ej.: Consolidación homogénea en base derecha con broncograma aéreo...",
             )
 
     # ---------------- EJECUCIÓN EN VIVO DE LOS 3 MOTORES ----------------
-    datos_paciente = {
-        "edad": int(edad), "sexo": sexo, "dias_evolucion": int(dias_evol),
-        "asma": bool(asma), "epoc": bool(epoc), "otra_enf_pulmonar": bool(otra_pulm),
-        "insuficiencia_cardiaca": bool(icc), "inmunosupresion": bool(inmuno), "demencia": bool(demencia),
-        "temperatura": float(temperatura), "frecuencia_cardiaca": int(frecuencia_cardiaca),
-        "crepitantes": bool(crepitantes), "murmullo_disminuido": bool(murmullo_disminuido),
-        "frecuencia_respiratoria": int(fr), "sat_o2": float(sat_o2),
-        "matidez": bool(matidez), "egofonia": bool(egofonia), "soplo_tubarico": bool(soplo),
-        "compromiso_conciencia": bool(conciencia), "rinorrea_odinofagia": bool(rinorrea),
-        "antipiretico_6h": bool(antipiretico),
-    }
+    ficha_completa = all(v is not None for v in (edad, sexo, temperatura, frecuencia_cardiaca, sat_o2, fr, dias_evol))
 
-    rf_res = predict_clinical_rf(datos_paciente)
+    if ficha_completa:
+        datos_paciente = {
+            "edad": int(edad), "sexo": str(sexo), "dias_evolucion": int(dias_evol),
+            "asma": bool(asma), "epoc": bool(epoc), "otra_enf_pulmonar": bool(otra_pulm),
+            "insuficiencia_cardiaca": bool(icc), "inmunosupresion": bool(inmuno), "demencia": bool(demencia),
+            "temperatura": float(temperatura), "frecuencia_cardiaca": int(frecuencia_cardiaca),
+            "crepitantes": bool(crepitantes), "murmullo_disminuido": bool(murmullo_disminuido),
+            "frecuencia_respiratoria": int(fr), "sat_o2": float(sat_o2),
+            "matidez": bool(matidez), "egofonia": bool(egofonia), "soplo_tubarico": bool(soplo),
+            "compromiso_conciencia": bool(conciencia), "rinorrea_odinofagia": bool(rinorrea),
+            "antipiretico_6h": bool(antipiretico),
+        }
+        rf_res = predict_clinical_rf(datos_paciente)
+    else:
+        datos_paciente = {}
+        rf_res = None
+
     rx_bytes = rx_file.getvalue() if (rx_file is not None and not rx_file.name.lower().endswith(".dcm")) else None
     cnn_res = predict_cnn(image_source=rx_bytes, manual_cnn_prob=cnn_manual_prob)
 
@@ -568,187 +641,220 @@ if pagina == "🏠 Evaluar Paciente":
             "resumen": "No se adjuntó informe PDF.",
         }
 
-    fusion = fusionar_predicciones(
-        datos_clinicos=datos_paciente,
-        prob_rf=rf_res["prob_rf"],
-        prob_cnn=cnn_res["prob_cnn"],
-        prob_nlp=nlp_res["prob_nlp"] if nlp_res.get("es_valido_paciente") else None,
-        modo=modo_eval,
-        es_antecedente_previo=bool(nlp_res.get("es_antecedente_previo", False)),
-    )
+    hay_alguna_senal = (rf_res is not None) or (cnn_res["prob_cnn"] is not None) or bool(nlp_res.get("es_valido_paciente"))
 
     # ---------------- COLUMNA DERECHA: VEREDICTO CLARO SIEMPRE VISIBLE ----------------
     with col_result:
-        v_cls = {"ROJO": "verdict-red", "AMARILLO": "verdict-yellow", "VERDE": "verdict-green"}[fusion["prioridad"]]
-        st.markdown(
-            f"""
-        <div class="verdict-box {v_cls}">
-            <div class="verdict-kicker">Resultado Integrado NEUMOALERT · {fusion['modo_aplicado']}</div>
-            <div class="verdict-main">{fusion['prob_integrada']:.0%} &nbsp; {priority_badge(fusion['prioridad'])}</div>
-            <div class="verdict-text"><b>Recomendación:</b> {fusion['accion_sugerida']}</div>
-        </div>
-        """,
-            unsafe_allow_html=True,
-        )
-
-        # Alerta clara de concordancia / discrepancia
-        conc = fusion["concordancia"]
-        if conc["color"] == "rojo":
-            st.error(f"**⚠️ {conc['estado']}:** {conc['mensaje']}")
-        elif conc["color"] == "amarillo":
-            st.warning(f"**🔎 {conc['estado']}:** {conc['mensaje']}")
-        elif conc["color"] == "verde":
-            st.success(f"**✅ {conc['estado']}:** {conc['mensaje']}")
+        if not hay_alguna_senal:
+            st.markdown(
+                """
+            <div class="verdict-box" style="background:#f8fafc;border-color:#cbd5e1;">
+                <div class="verdict-kicker">Formulario limpio · Listo para evaluar</div>
+                <div class="verdict-main" style="font-size:1.45rem;color:#334155;">Sin datos ingresados todavía</div>
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
         else:
-            st.info(f"**ℹ️ {conc['estado']}:** {conc['mensaje']}")
+            fusion = fusionar_predicciones(
+                datos_clinicos=datos_paciente,
+                prob_rf=rf_res["prob_rf"] if rf_res is not None else None,
+                prob_cnn=cnn_res["prob_cnn"],
+                prob_nlp=nlp_res["prob_nlp"] if nlp_res.get("es_valido_paciente") else None,
+                modo=modo_eval,
+                es_antecedente_previo=bool(nlp_res.get("es_antecedente_previo", False)),
+            )
 
-        # 3 mini-tarjetas simples
-        mc1, mc2, mc3 = st.columns(3)
-        with mc1:
+            v_cls = {"ROJO": "verdict-red", "AMARILLO": "verdict-yellow", "VERDE": "verdict-green"}[fusion["prioridad"]]
             st.markdown(
                 f"""
-            <div class="mini-card">
-                <div class="mini-title">📋 Clínica (RF)</div>
-                <div class="mini-num">{rf_res['prob_rf']:.0%}</div>
-                <div class="mini-sub">Heckerling: <b>{rf_res['heckerling']['puntaje']}/5</b></div>
-            </div>
-            """,
-                unsafe_allow_html=True,
-            )
-        with mc2:
-            cnn_str = f"{cnn_res['prob_cnn']:.0%}" if cnn_res["prob_cnn"] is not None else "—"
-            st.markdown(
-                f"""
-            <div class="mini-card">
-                <div class="mini-title">🩻 Radiografía</div>
-                <div class="mini-num">{cnn_str}</div>
-                <div class="mini-sub">{"CNN real" if cnn_status["available"] else "Valor CNN (prueba)"}</div>
-            </div>
-            """,
-                unsafe_allow_html=True,
-            )
-        with mc3:
-            nlp_str = f"{nlp_res['prob_nlp']:.0%}" if nlp_res.get("prob_nlp") is not None else "—"
-            st.markdown(
-                f"""
-            <div class="mini-card">
-                <div class="mini-title">📄 Informe PDF</div>
-                <div class="mini-num" style="font-size:1.18rem; padding-top:0.2rem;">{nlp_res['clase_nlp']}</div>
-                <div class="mini-sub">Score NLP: <b>{nlp_str}</b></div>
+            <div class="verdict-box {v_cls}">
+                <div class="verdict-kicker">Resultado Integrado NEUMOALERT · {fusion['modo_aplicado']}</div>
+                <div class="verdict-main">{fusion['prob_integrada']:.0%} &nbsp; {priority_badge(fusion['prioridad'])}</div>
+                <div class="verdict-text"><b>Recomendación:</b> {fusion['accion_sugerida']}</div>
             </div>
             """,
                 unsafe_allow_html=True,
             )
 
-        render_signal_bar(
-            rf_res["prob_rf"],
-            cnn_res["prob_cnn"],
-            nlp_res["prob_nlp"] if (nlp_res.get("es_valido_paciente") and not nlp_res.get("es_antecedente_previo") and "Antes" not in modo_eval) else None,
-            fusion["prob_integrada"],
-        )
-
-        # Explicación en español cotidiano
-        exp = rf_res["explicacion"]
-        with st.expander("💡 ¿Por qué dio este resultado? (Explicación clínica + palabras del PDF)", expanded=True):
-            if exp["a_favor"]:
-                st.markdown("**Señales a favor de sospecha:** " + " · ".join(exp["a_favor"][:5]))
-            if exp["en_contra"]:
-                st.markdown("**Señales en contra de neumonía:** " + " · ".join(exp["en_contra"]))
-            for nota in exp["notas"]:
-                st.info(nota)
-
-            if nlp_res.get("tipo_documento") == "PROTOCOLO O GUÍA CLÍNICA":
-                st.warning("📄 El PDF cargado es una guía médica teórica, no un informe de paciente (filtrado automáticamente).")
-            elif nlp_res.get("palabras_clave"):
-                st.markdown("**Palabras clave detectadas en el informe PDF:**")
-                render_keyword_chips(nlp_res["palabras_clave"])
-
-        if nlp_res.get("hallazgos"):
-            with st.expander(f"🔎 Ver frases exactas leídas del PDF ({pdf_name or 'texto'})", expanded=False):
-                df_h = pd.DataFrame(
-                    [
-                        {"Categoría": h["estado"], "Palabras clave": ", ".join(h["palabras_clave"]) or "—", "Frase": h["oracion"]}
-                        for h in nlp_res["hallazgos"]
-                    ]
-                )
-                st.dataframe(df_h, width="stretch", hide_index=True)
-
-        # Guardar en base de datos
-        if st.button("💾 Guardar paciente en la Cola de Urgencias", type="primary", width="stretch"):
-            rut_clean = rut_val.strip().upper().replace(".", "")
-            if not re.fullmatch(r"\d{7,8}-[\dK]", rut_clean):
-                st.error("Formato de RUT inválido (ej. 16482910-3). Usa el botón '🎲 Nuevo'.")
+            # Alerta clara de concordancia / discrepancia
+            conc = fusion["concordancia"]
+            if conc["color"] == "rojo":
+                st.error(f"**⚠️ {conc['estado']}:** {conc['mensaje']}")
+            elif conc["color"] == "amarillo":
+                st.warning(f"**🔎 {conc['estado']}:** {conc['mensaje']}")
+            elif conc["color"] == "verde":
+                st.success(f"**✅ {conc['estado']}:** {conc['mensaje']}")
             else:
-                r_num, dv = rut_clean.split("-")
-                if rut_dv(r_num) != dv:
-                    st.error("El dígito verificador del RUT no coincide. Haz clic en '🎲 Nuevo'.")
-                else:
-                    try:
-                        ruta_rx = guardar_archivo(rx_file, rut_clean, "rx_actual")
-                        ruta_pdf = guardar_archivo(pdf_up, rut_clean, "informe_pdf") if pdf_up else (
-                            str(SAMPLE_PDF_DIR / pdf_name) if (fuente_pdf == "Informe de ejemplo" and pdf_name) else None
-                        )
-                        fecha = datetime.now()
-                        kw_str = ", ".join(f"{k['termino']} ({k['polaridad']})" for k in nlp_res.get("palabras_clave", []))
-                        txt_doc = texto_libre.strip() or (
-                            " | ".join(h["oracion"] for h in nlp_res["hallazgos"][:3]) if nlp_res.get("hallazgos") else nlp_res.get("resumen", "")
-                        )
+                st.info(f"**ℹ️ {conc['estado']}:** {conc['mensaje']}")
 
-                        with engine.begin() as conn:
-                            conn.execute(
-                                pacientes.insert().values(
-                                    id=rut_clean,
-                                    puntaje_heckerling=rf_res["heckerling"]["puntaje"],
-                                    prob_rf=rf_res["prob_rf"],
-                                    prob_cnn=cnn_res["prob_cnn"],
-                                    prob_nlp=nlp_res.get("prob_nlp"),
-                                    prob_integrada=fusion["prob_integrada"],
-                                    categoria_rx_nlp=nlp_res.get("clase_nlp", "Sin informe"),
-                                    concordancia_ia=fusion["concordancia"]["estado"],
-                                    prioridad=fusion["prioridad"],
-                                    fecha_ingreso=fecha,
-                                    estado="En evaluación",
-                                    **datos_paciente,
-                                )
+            # 3 mini-tarjetas simples
+            mc1, mc2, mc3 = st.columns(3)
+            with mc1:
+                rf_num = f"{rf_res['prob_rf']:.0%}" if rf_res is not None else "—"
+                rf_sub = f"Heckerling: <b>{rf_res['heckerling']['puntaje']}/5</b>" if rf_res is not None else "Completa la ficha"
+                st.markdown(
+                    f"""
+                <div class="mini-card">
+                    <div class="mini-title">📋 Clínica (RF)</div>
+                    <div class="mini-num">{rf_num}</div>
+                    <div class="mini-sub">{rf_sub}</div>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+            with mc2:
+                cnn_str = f"{cnn_res['prob_cnn']:.0%}" if cnn_res["prob_cnn"] is not None else "—"
+                st.markdown(
+                    f"""
+                <div class="mini-card">
+                    <div class="mini-title">🩻 Radiografía</div>
+                    <div class="mini-num">{cnn_str}</div>
+                    <div class="mini-sub">{"CNN real" if cnn_status["available"] else "Valor CNN (prueba)"}</div>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+            with mc3:
+                nlp_str = f"{nlp_res['prob_nlp']:.0%}" if nlp_res.get("prob_nlp") is not None else "—"
+                st.markdown(
+                    f"""
+                <div class="mini-card">
+                    <div class="mini-title">📄 Informe PDF</div>
+                    <div class="mini-num" style="font-size:1.18rem; padding-top:0.2rem;">{nlp_res['clase_nlp']}</div>
+                    <div class="mini-sub">Score NLP: <b>{nlp_str}</b></div>
+                </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+
+            render_signal_bar(
+                rf_res["prob_rf"] if rf_res is not None else None,
+                cnn_res["prob_cnn"],
+                nlp_res["prob_nlp"] if (nlp_res.get("es_valido_paciente") and not nlp_res.get("es_antecedente_previo") and "Antes" not in modo_eval) else None,
+                fusion["prob_integrada"],
+            )
+
+            # Explicación en español cotidiano
+            with st.expander("💡 ¿Por qué dio este resultado? (Explicación clínica + palabras del PDF)", expanded=True):
+                if rf_res is not None:
+                    exp = rf_res["explicacion"]
+                    if exp["a_favor"]:
+                        st.markdown("**Señales a favor de sospecha:** " + " · ".join(exp["a_favor"][:5]))
+                    if exp["en_contra"]:
+                        st.markdown("**Señales en contra de neumonía:** " + " · ".join(exp["en_contra"]))
+                    for nota in exp["notas"]:
+                        st.info(nota)
+                else:
+                    st.caption("Completa la ficha clínica (edad, sexo y signos vitales) para incluir el análisis del Random Forest.")
+
+                if nlp_res.get("tipo_documento") == "PROTOCOLO O GUÍA CLÍNICA":
+                    st.warning("📄 El PDF cargado es una guía médica teórica, no un informe de paciente (filtrado automáticamente).")
+                elif nlp_res.get("palabras_clave"):
+                    st.markdown("**Palabras clave detectadas en el informe PDF:**")
+                    render_keyword_chips(nlp_res["palabras_clave"])
+
+            if nlp_res.get("hallazgos"):
+                with st.expander(f"🔎 Ver frases exactas leídas del PDF ({pdf_name or 'texto'})", expanded=False):
+                    df_h = pd.DataFrame(
+                        [
+                            {"Categoría": h["estado"], "Palabras clave": ", ".join(h["palabras_clave"]) or "—", "Frase": h["oracion"]}
+                            for h in nlp_res["hallazgos"]
+                        ]
+                    )
+                    st.dataframe(df_h, width="stretch", hide_index=True)
+
+            # Guardar en base de datos
+            if st.button("💾 Guardar paciente en la Cola de Urgencias", type="primary", width="stretch"):
+                rut_clean = rut_val.strip().upper().replace(".", "")
+                if not ficha_completa:
+                    st.warning("Completa primero todos los datos de la ficha clínica (edad, sexo y signos vitales) antes de guardar.")
+                elif not re.fullmatch(r"\d{7,8}-[\dK]", rut_clean):
+                    st.error("Formato de RUT inválido (ej. 16482910-3). Usa el botón '🎲 Nuevo'.")
+                else:
+                    r_num, dv = rut_clean.split("-")
+                    if rut_dv(r_num) != dv:
+                        st.error("El dígito verificador del RUT no coincide. Haz clic en '🎲 Nuevo'.")
+                    else:
+                        try:
+                            ruta_rx = guardar_archivo(rx_file, rut_clean, "rx_actual")
+                            ruta_rx_ant = guardar_archivo(rx_antigua, rut_clean, "rx_antigua")
+                            ruta_pdf = guardar_archivo(pdf_up, rut_clean, "informe_pdf") if pdf_up else (
+                                str(SAMPLE_PDF_DIR / pdf_name) if (fuente_pdf == "Informe de ejemplo" and pdf_name) else None
                             )
-                            conn.execute(
-                                imagenes.insert().values(
-                                    paciente_id=rut_clean,
-                                    ruta_imagen=ruta_rx,
-                                    tipo="Rx actual",
-                                    prob_ia=cnn_res["prob_cnn"],
-                                    prediccion_ia=cnn_res["prediccion_cnn"],
-                                    modo_cnn=cnn_res["modo"],
-                                    fecha=fecha,
-                                )
+                            fecha = datetime.now()
+                            kw_str = ", ".join(f"{k['termino']} ({k['polaridad']})" for k in nlp_res.get("palabras_clave", []))
+                            txt_doc = texto_libre.strip() or (
+                                " | ".join(h["oracion"] for h in nlp_res["hallazgos"][:3]) if nlp_res.get("hallazgos") else nlp_res.get("resumen", "")
                             )
-                            conn.execute(
-                                diagnosticos.insert().values(
-                                    paciente_id=rut_clean,
-                                    tipo_documento=nlp_res.get("tipo_documento", "SIN DOCUMENTO PDF"),
-                                    texto_medico=txt_doc,
-                                    categoria_rx=nlp_res.get("clase_nlp", "Sin informe"),
-                                    prob_nlp=nlp_res.get("prob_nlp"),
-                                    palabras_clave=kw_str,
-                                    diagnostico_final="Pendiente de validación",
-                                    concordancia=fusion["concordancia"]["estado"],
-                                    pdf_path=ruta_pdf,
-                                    fecha=fecha,
+
+                            with engine.begin() as conn:
+                                conn.execute(
+                                    pacientes.insert().values(
+                                        id=rut_clean,
+                                        puntaje_heckerling=rf_res["heckerling"]["puntaje"],
+                                        prob_rf=rf_res["prob_rf"],
+                                        prob_cnn=cnn_res["prob_cnn"],
+                                        prob_nlp=nlp_res.get("prob_nlp"),
+                                        prob_integrada=fusion["prob_integrada"],
+                                        categoria_rx_nlp=nlp_res.get("clase_nlp", "Sin informe"),
+                                        concordancia_ia=fusion["concordancia"]["estado"],
+                                        prioridad=fusion["prioridad"],
+                                        fecha_ingreso=fecha,
+                                        estado="En evaluación",
+                                        **datos_paciente,
+                                    )
                                 )
-                            )
-                            conn.execute(
-                                alertas.insert().values(
-                                    paciente_id=rut_clean,
-                                    prioridad=fusion["prioridad"],
-                                    motivo=fusion["motivo"],
-                                    estado_alerta="Pendiente" if fusion["prioridad"] in ("ROJO", "AMARILLO") else "Informativa",
-                                    fecha=fecha,
+                                conn.execute(
+                                    imagenes.insert().values(
+                                        paciente_id=rut_clean,
+                                        ruta_imagen=ruta_rx,
+                                        tipo="Rx actual",
+                                        prob_ia=cnn_res["prob_cnn"],
+                                        prediccion_ia=cnn_res["prediccion_cnn"],
+                                        modo_cnn=cnn_res["modo"],
+                                        fecha=fecha,
+                                    )
                                 )
-                            )
-                        st.success(f"✅ Paciente **{rut_clean}** guardado en urgencias (Prioridad {fusion['prioridad']}).")
-                        st.session_state["regenerar_rut"] = True
-                    except SQLAlchemyError as exc:
-                        st.error(f"No se pudo guardar (puede que el RUT ya exista). Haz clic en '🎲 Nuevo'. Detalle: {exc}")
+                                if ruta_rx_ant:
+                                    conn.execute(
+                                        imagenes.insert().values(
+                                            paciente_id=rut_clean,
+                                            ruta_imagen=ruta_rx_ant,
+                                            tipo="Rx antigua",
+                                            prob_ia=None,
+                                            prediccion_ia="Referencia histórica",
+                                            modo_cnn="HISTORIAL",
+                                            fecha=fecha,
+                                        )
+                                    )
+                                conn.execute(
+                                    diagnosticos.insert().values(
+                                        paciente_id=rut_clean,
+                                        tipo_documento=nlp_res.get("tipo_documento", "SIN DOCUMENTO PDF"),
+                                        texto_medico=txt_doc,
+                                        categoria_rx=nlp_res.get("clase_nlp", "Sin informe"),
+                                        prob_nlp=nlp_res.get("prob_nlp"),
+                                        palabras_clave=kw_str,
+                                        diagnostico_final="Pendiente de validación",
+                                        concordancia=fusion["concordancia"]["estado"],
+                                        pdf_path=ruta_pdf,
+                                        fecha=fecha,
+                                    )
+                                )
+                                conn.execute(
+                                    alertas.insert().values(
+                                        paciente_id=rut_clean,
+                                        prioridad=fusion["prioridad"],
+                                        motivo=fusion["motivo"],
+                                        estado_alerta="Pendiente" if fusion["prioridad"] in ("ROJO", "AMARILLO") else "Informativa",
+                                        fecha=fecha,
+                                    )
+                                )
+                            st.success(f"✅ Paciente **{rut_clean}** guardado en urgencias (Prioridad {fusion['prioridad']}).")
+                            st.session_state["regenerar_rut"] = True
+                        except SQLAlchemyError as exc:
+                            st.error(f"No se pudo guardar (puede que el RUT ya exista). Haz clic en '🎲 Nuevo'. Detalle: {exc}")
 
 
 # ============================================================

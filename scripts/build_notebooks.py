@@ -187,27 +187,69 @@ Clasifica informes radiológicos PDF en las **4 categorías exactas de la Secci�
 3. `Probable`
 4. `Definitiva`
 
-Y luego muestra cómo se une con la **Red Neuronal (CNN)** y el **Random Forest (ficha Heckerling)**."""
+Y luego muestra cómo se une con la **Red Neuronal (CNN)** y el **Random Forest (ficha Heckerling)** evitando circularidad (*data leakage*)."""
         ),
+        md_cell("## 1. Cargar `radiology_reports_dataset.csv` (o generarlo automáticamente en Colab)"),
         code_cell(
             """!pip install pymupdf scikit-learn pandas matplotlib joblib -q
 import os
+import random
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, classification_report, f1_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
+
+def generar_informes_4clases(n_samples=1000, seed=42):
+    rng = random.Random(seed)
+    headers = ["INFORME RADIOLÓGICO - RADIOGRAFÍA DE TÓRAX PA Y LATERAL.", "ESTUDIO: RADIOGRAFÍA DE TÓRAX AP Y LATERAL."]
+    motivos = ["Motivo de estudio: fiebre y tos, descartar neumonía.", "Motivo: sospecha clínica de neumonía en urgencia."]
+    regiones = ["lóbulo inferior derecho", "base pulmonar izquierda", "lóbulo medio derecho", "ambas bases pulmonares"]
+    extras = ["Silueta cardiomediastínica de tamaño normal.", "Senos costofrénicos libres y agudos."]
+    def_h = ["Extensa consolidación parenquimatosa homogénea en {reg} con broncograma aéreo evidente.", "Foco de condensación alveolar denso en {reg} con derrame pleural ipsilateral."]
+    def_c = ["Impresión diagnóstica: Neumonía confirmada radiográficamente en {reg}. Infiltrado neumónico inequívoco.", "Conclusión radiológica: Consolidación neumónica definitiva en {reg}."]
+    prob_h = ["Opacidad alveolar parcheada en {reg} de densidad moderada.", "Infiltrado parenquimatoso focal en {reg} con discreto refuerzo peribronquial."]
+    prob_c = ["Impresión diagnóstica: Hallazgos que probablemente corresponden a neumonía en {reg}.", "Conclusión: Lo más probable es un proceso neumónico activo en {reg}."]
+    pos_h = ["Tenue opacidad mal definida en {reg}, parcialmente superpuesta a arcos costales.", "Discreto infiltrado intersticial inespecífico en {reg}, sin consolidación franca."]
+    pos_c = ["Impresión diagnóstica: Posible infiltrado neumónico incipiente en {reg}; no se puede descartar neumonía inicial.", "Conclusión: Hallazgo dudoso en {reg}, no se descarta proceso infeccioso temprano."]
+    neg_h = ["Campos pulmonares bien ventilados y simétricos, sin evidencia de infiltrados alveolares ni consolidaciones.", "Pequeña banda fibrocicatricial antigua en {reg}, sin infiltrados agudos ni signos de infección."]
+    neg_c = ["Impresión diagnóstica: Radiografía de tórax normal, sin evidencia de neumonía.", "Conclusión radiológica: Estudio sin signos de neumonía. Se descarta compromiso agudo."]
+    b_dp = "Consolidación parcheada moderada en {reg}; hallazgos altamente sugestivos de foco neumónico en evolución."
+    b_pp = "Opacidad focal tenue en {reg} que podría corresponder a proceso inflamatorio o probable foco incipiente."
+    b_pn = "Baja inspiración con discreto refuerzo basal en {reg}; sin consolidación franca, aunque difícil descartar foco muy inicial."
+
+    per_cls = n_samples // 4
+    classes = ["Sin neumonía"]*per_cls + ["Posible"]*per_cls + ["Probable"]*per_cls + ["Definitiva"]*(n_samples - 3*per_cls)
+    rng.shuffle(classes)
+    rows = []
+    for i, lbl in enumerate(classes, 1):
+        reg, h, m, ex = rng.choice(regiones), rng.choice(headers), rng.choice(motivos), rng.choice(extras)
+        r = rng.random()
+        if lbl == "Definitiva":
+            txt = f"{h} {m} Hallazgos: {b_dp.format(reg=reg)} {ex}" if r < 0.08 else f"{h} {m} Hallazgos: {rng.choice(def_h).format(reg=reg)} {ex} {rng.choice(def_c).format(reg=reg)}"
+        elif lbl == "Probable":
+            if r < 0.06: txt = f"{h} {m} Hallazgos: {b_dp.format(reg=reg)} {ex}"
+            elif r < 0.12: txt = f"{h} {m} Hallazgos: {b_pp.format(reg=reg)} {ex}"
+            else: txt = f"{h} {m} Hallazgos: {rng.choice(prob_h).format(reg=reg)} {ex} {rng.choice(prob_c).format(reg=reg)}"
+        elif lbl == "Posible":
+            if r < 0.06: txt = f"{h} {m} Hallazgos: {b_pp.format(reg=reg)} {ex}"
+            elif r < 0.12: txt = f"{h} {m} Hallazgos: {b_pn.format(reg=reg)} {ex}"
+            else: txt = f"{h} {m} Hallazgos: {rng.choice(pos_h).format(reg=reg)} {ex} {rng.choice(pos_c).format(reg=reg)}"
+        else:
+            txt = f"{h} {m} Hallazgos: {b_pn.format(reg=reg)} {ex}" if r < 0.08 else f"{h} {m} Hallazgos: {rng.choice(neg_h).format(reg=reg)} {ex} {rng.choice(neg_c).format(reg=reg)}"
+        rows.append({"report_id": f"RX-{i:04d}", "texto_informe": txt, "categoria_rx": lbl})
+    return pd.DataFrame(rows)
 
 CSV_CANDIDATES = ["radiology_reports_dataset.csv", "../data/radiology_reports_dataset.csv"]
 csv_found = next((p for p in CSV_CANDIDATES if os.path.exists(p)), None)
-assert csv_found is not None, "Sube el archivo radiology_reports_dataset.csv de la carpeta data/ a Colab."
+df_rx = pd.read_csv(csv_found) if csv_found else generar_informes_4clases()
 
-df_rx = pd.read_csv(csv_found)
-print("Informes:", len(df_rx))
+print("Informes cargados:", len(df_rx))
 print(df_rx["categoria_rx"].value_counts())"""
         ),
+        md_cell("## 2. Entrenar y evaluar TF-IDF (1-3 gramas) + Regresión Logística en 4 categorías"),
         code_cell(
             """X_train, X_test, y_train, y_test = train_test_split(
     df_rx["texto_informe"], df_rx["categoria_rx"], test_size=0.20, random_state=42, stratify=df_rx["categoria_rx"]
@@ -217,11 +259,16 @@ nlp_pipe = Pipeline([
     ("tfidf", TfidfVectorizer(lowercase=True, ngram_range=(1, 3), min_df=2, max_features=3500, sublinear_tf=True)),
     ("clf", LogisticRegression(max_iter=1000, C=2.2, class_weight="balanced", random_state=42)),
 ])
+
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+cv_f1 = cross_val_score(nlp_pipe, X_train, y_train, cv=cv, scoring="f1_macro").mean()
+
 nlp_pipe.fit(X_train, y_train)
 y_pred = nlp_pipe.predict(X_test)
 
 orden = ["Sin neumonía", "Posible", "Probable", "Definitiva"]
-print(f"Accuracy: {accuracy_score(y_test, y_pred):.1%} | F1 Macro: {f1_score(y_test, y_pred, average='macro'):.1%}\\n")
+print(f"CV 5-Fold F1 Macro: {cv_f1:.1%}")
+print(f"Test Accuracy: {accuracy_score(y_test, y_pred):.1%} | Test F1 Macro: {f1_score(y_test, y_pred, average='macro'):.1%}\\n")
 print(classification_report(y_test, y_pred, labels=orden))
 
 ConfusionMatrixDisplay.from_predictions(y_test, y_pred, labels=orden, cmap="Greens")
@@ -229,9 +276,9 @@ plt.title("Matriz de Confusión 4×4 — Categorías del Radiólogo (Sección E)
 plt.tight_layout()
 plt.show()"""
         ),
+        md_cell("## 3. Prueba con casos reales (incluyendo negación trampa: 'descartar neumonía' -> 'Sin neumonía')"),
         code_cell(
-            """# Prueba rápida con ejemplos reales (incluyendo negación trampa)
-ejemplos = [
+            """ejemplos = [
     "Motivo: descartar neumonía. Hallazgos: Consolidación homogénea con broncograma aéreo en base derecha. Conclusión: Infiltrado neumónico inequívoco.",
     "Hallazgos: Opacidad alveolar parcheada basal izquierda. Conclusión: Lo más probable es neumonía adquirida en la comunidad.",
     "Hallazgos: Tenue infiltrado intersticial dudoso. Conclusión: Posible infiltrado inicial, no se puede descartar neumonía.",
@@ -239,7 +286,29 @@ ejemplos = [
 ]
 for txt in ejemplos:
     pred = nlp_pipe.predict([txt])[0]
-    print(f"[{pred:12s}] -> {txt[:100]}...")"""
+    print(f"[{pred:12s}] -> {txt[:105]}...")"""
+        ),
+        md_cell("## 4. Fusión Multimodal: Uniendo CNN (Radiografía) + Random Forest (Heckerling) + NLP (Informe PDF)"),
+        code_cell(
+            """def fusion_multimodal(prob_cnn, prob_rf, prob_nlp=None, modo="DOBLE_CHEQUEO"):
+    if modo == "TRIAGE" or prob_nlp is None:
+        prob_final = 0.60 * prob_cnn + 0.40 * prob_rf
+        concordancia = "ALTA CONCORDANCIA (CLÍNICA + RX)" if abs(prob_cnn - prob_rf) <= 0.28 else "REVISAR CONTEXTO CLÍNICO"
+    else:
+        prob_final = 0.45 * prob_cnn + 0.25 * prob_rf + 0.30 * prob_nlp
+        if prob_cnn >= 0.65 and prob_nlp < 0.30:
+            concordancia = "⚠️ DISCREPANCIA CRÍTICA (CNN alta vs Informe Sin neumonía)"
+        elif prob_nlp >= 0.65 and prob_cnn < 0.35:
+            concordancia = "⚠️ DISCREPANCIA A REVISAR (Informe positivo vs CNN baja)"
+        elif abs(prob_cnn - prob_nlp) <= 0.25:
+            concordancia = "✅ ALTA CONCORDANCIA"
+        else:
+            concordancia = "🟡 CONCORDANCIA PARCIAL"
+    return {"prob_integrada": round(prob_final, 3), "concordancia": concordancia}
+
+print("Modo Triage (sin informe aún)         :", fusion_multimodal(prob_cnn=0.88, prob_rf=0.82, modo="TRIAGE"))
+print("Modo Doble Chequeo (concordante)      :", fusion_multimodal(prob_cnn=0.92, prob_rf=0.86, prob_nlp=0.95))
+print("Modo Doble Chequeo (DISCREPANCIA!)    :", fusion_multimodal(prob_cnn=0.88, prob_rf=0.84, prob_nlp=0.06))"""
         ),
     ]
     return make_notebook(cells)

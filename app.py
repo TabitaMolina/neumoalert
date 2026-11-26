@@ -69,35 +69,85 @@ st.markdown(
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     html, body, [class*="css"] { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-    .block-container { padding-top: 1.2rem; padding-bottom: 2.2rem; max-width: 1420px; }
+    .block-container {
+        padding-top: 1.15rem;
+        padding-bottom: 2.2rem;
+        padding-left: clamp(0.85rem, 2.5vw, 2.2rem);
+        padding-right: clamp(0.85rem, 2.5vw, 2.2rem);
+        max-width: 1420px;
+    }
+
+    /* Evitar que cualquier texto de etiqueta, checkbox, botón, pestaña o métrica se corte con "..." */
+    div[data-testid="stCheckbox"] label,
+    div[data-testid="stCheckbox"] label p,
+    div[data-testid="stCheckbox"] span,
+    div[data-testid="stRadio"] label,
+    div[data-testid="stRadio"] label p,
+    label[data-testid="stWidgetLabel"],
+    label[data-testid="stWidgetLabel"] p,
+    button[data-baseweb="tab"],
+    button[data-baseweb="tab"] p,
+    div[data-testid="stButton"] button,
+    div[data-testid="stButton"] button p,
+    div[data-testid="stDownloadButton"] button p,
+    div[data-testid="stExpander"] summary,
+    div[data-testid="stExpander"] summary p,
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stMetricLabel"] p,
+    div[data-testid="stMetricValue"],
+    div[data-testid="stMetricValue"] > div {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        overflow-wrap: break-word !important;
+        word-break: normal !important;
+        line-height: 1.32 !important;
+        height: auto !important;
+    }
+
+    div[data-testid="stButton"] button {
+        min-height: 2.5rem;
+        padding: 0.42rem 0.7rem;
+    }
+
+    div[data-testid="stCheckbox"] {
+        padding-top: 0.15rem;
+        padding-bottom: 0.15rem;
+    }
+
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+        flex-wrap: wrap !important;
+        gap: 0.35rem;
+    }
 
     .top-bar {
         background: linear-gradient(135deg, #0b2d48 0%, #0f4c75 60%, #0e7490 100%);
         color: #ffffff;
-        padding: 1.15rem 1.6rem;
+        padding: clamp(0.95rem, 2vw, 1.25rem) clamp(1rem, 2.4vw, 1.6rem);
         border-radius: 16px;
-        margin-bottom: 1.1rem;
+        margin-bottom: 1.05rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: 0.8rem;
+        gap: 0.75rem;
         box-shadow: 0 6px 20px rgba(11, 45, 72, 0.13);
     }
-    .top-title { font-size: 1.65rem; font-weight: 800; margin: 0; letter-spacing: -0.02em; }
-    .top-sub { font-size: 0.9rem; color: #dbeafe; margin: 0.2rem 0 0 0; }
+    .top-title { font-size: clamp(1.3rem, 2.6vw, 1.7rem); font-weight: 800; margin: 0; letter-spacing: -0.02em; }
+    .top-sub { font-size: clamp(0.82rem, 1.3vw, 0.92rem); color: #dbeafe; margin: 0.22rem 0 0 0; line-height: 1.35; }
     .top-tag {
         background: rgba(255,255,255,0.16);
         border: 1px solid rgba(255,255,255,0.28);
-        padding: 0.35rem 0.85rem;
+        padding: 0.32rem 0.85rem;
         border-radius: 999px;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         font-weight: 600;
+        white-space: nowrap;
     }
 
     .verdict-box {
         border-radius: 16px;
-        padding: 1.2rem 1.35rem;
+        padding: clamp(0.95rem, 2vw, 1.25rem) clamp(1rem, 2.2vw, 1.35rem);
         margin-bottom: 0.9rem;
         border-width: 2px;
         border-style: solid;
@@ -106,21 +156,33 @@ st.markdown(
     .verdict-yellow { background: #fffbeb; border-color: #f59e0b; }
     .verdict-green { background: #f0fdf4; border-color: #22c55e; }
 
-    .verdict-kicker { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; }
-    .verdict-main { font-size: 2.15rem; font-weight: 800; margin: 0.15rem 0; line-height: 1.1; color: #0f172a; }
-    .verdict-text { font-size: 0.92rem; color: #334155; margin-top: 0.35rem; }
+    .verdict-kicker { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; line-height: 1.35; }
+    .verdict-main {
+        font-size: clamp(1.45rem, 2.8vw, 2.1rem);
+        font-weight: 800;
+        margin: 0.2rem 0;
+        line-height: 1.25;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .verdict-text { font-size: 0.91rem; color: #334155; margin-top: 0.35rem; line-height: 1.4; }
 
     .mini-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 13px;
-        padding: 0.85rem 1rem;
+        padding: 0.8rem 0.9rem;
         box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
         height: 100%;
+        min-height: 92px;
+        overflow-wrap: break-word;
     }
-    .mini-title { font-size: 0.74rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
-    .mini-num { font-size: 1.55rem; font-weight: 800; color: #0f172a; margin: 0.15rem 0; }
-    .mini-sub { font-size: 0.8rem; color: #475569; line-height: 1.3; }
+    .mini-title { font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.3; }
+    .mini-num { font-size: clamp(1.1rem, 2vw, 1.5rem); font-weight: 800; color: #0f172a; margin: 0.18rem 0; line-height: 1.2; }
+    .mini-sub { font-size: 0.78rem; color: #475569; line-height: 1.35; }
 
     .heck-banner {
         background: #f0f9ff;
@@ -129,14 +191,16 @@ st.markdown(
         border-radius: 12px;
         padding: 0.75rem 1rem;
         margin: 0.5rem 0 0.85rem 0;
+        line-height: 1.4;
     }
 
     .badge {
         display: inline-block;
         padding: 0.24rem 0.68rem;
         border-radius: 999px;
-        font-size: 0.76rem;
+        font-size: 0.75rem;
         font-weight: 700;
+        line-height: 1.25;
     }
     .badge-red { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
     .badge-yellow { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
@@ -151,6 +215,7 @@ st.markdown(
         border-radius: 8px;
         font-size: 0.78rem;
         font-weight: 600;
+        line-height: 1.3;
     }
 
     div[data-testid="stMetric"] {
@@ -158,6 +223,30 @@ st.markdown(
         border: 1px solid #e2e8f0;
         padding: 12px 14px;
         border-radius: 12px;
+    }
+    div[data-testid="stMetricValue"] {
+        font-size: clamp(1.15rem, 2.1vw, 1.7rem) !important;
+    }
+
+    /* Diseño responsivo: tablet y ventana dividida */
+    @media (max-width: 1024px) {
+        div[data-testid="stHorizontalBlock"] {
+            flex-wrap: wrap !important;
+            gap: 0.7rem !important;
+        }
+        div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
+            min-width: 240px !important;
+            flex: 1 1 240px !important;
+        }
+    }
+
+    /* Diseño responsivo: celular */
+    @media (max-width: 640px) {
+        div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
+            min-width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+        .mini-card { min-height: auto; }
     }
 </style>
 """,
@@ -343,10 +432,10 @@ def render_signal_bar(prob_rf: float | None, prob_cnn: float | None, prob_nlp: f
         )
     )
     fig.update_layout(
-        xaxis=dict(range=[0, 114], title="Probabilidad estimada (%)"),
-        yaxis=dict(autorange="reversed"),
-        height=225,
-        margin=dict(l=6, r=24, t=8, b=28),
+        xaxis=dict(range=[0, 118], title="Probabilidad estimada (%)", automargin=True),
+        yaxis=dict(autorange="reversed", automargin=True),
+        height=230,
+        margin=dict(l=8, r=28, t=8, b=32),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
     )
@@ -363,10 +452,10 @@ def priority_badge(prio: str) -> str:
 # BARRA LATERAL SIMPLE (4 PANTALLAS CLARAS)
 # ============================================================
 st.sidebar.markdown("## 🫁 NEUMOALERT")
-st.sidebar.caption("Apoyo inteligente para urgencia respiratoria")
+st.sidebar.caption("Apoyo clínico para sospecha de neumonía")
 
 pagina = st.sidebar.radio(
-    "¿Qué quieres hacer?",
+    "Navegación",
     [
         "🏠 Evaluar Paciente",
         "🚨 Cola de Urgencias y Alertas",
@@ -376,18 +465,15 @@ pagina = st.sidebar.radio(
 )
 
 st.sidebar.divider()
-st.sidebar.markdown("**Estado del sistema**")
 st.sidebar.markdown(
     f"""
-- **Ficha Heckerling + Random Forest:** 🟢 Listo
-- **Lector PDF (4 categorías):** 🟢 Listo
-- **Red Neuronal Rx (CNN):** {"🟢 Conectada" if cnn_status["available"] else "🟡 Modo prueba (lista para enchufar)"}
+**Motores IA**  
+🟢 Random Forest · 🟢 NLP PDF  
+{"🟢 CNN conectada" if cnn_status["available"] else "🟡 CNN en modo prueba"}
 """
 )
 st.sidebar.divider()
-st.sidebar.caption(
-    "⚠️ Prototipo académico Capstone SIC 2026. No reemplaza la radiografía ni la evaluación de un médico."
-)
+st.sidebar.caption("⚠️ Prototipo académico SIC 2026. No sustituye evaluación médica.")
 
 # ============================================================
 # ENCABEZADO SUPERIOR
@@ -397,9 +483,9 @@ st.markdown(
 <div class="top-bar">
     <div>
         <p class="top-title">🫁 NEUMOALERT</p>
-        <p class="top-sub">Ficha clínica de Heckerling + Random Forest · Lectura NLP de informes · Conector Red Neuronal (CNN)</p>
+        <p class="top-sub">Evaluación multimodal de neumonía · Radiografía + Ficha Heckerling + Informe PDF</p>
     </div>
-    <div class="top-tag">Prototipo Capstone IA</div>
+    <div class="top-tag">Capstone IA</div>
 </div>
 """,
     unsafe_allow_html=True,
@@ -407,91 +493,82 @@ st.markdown(
 
 
 # ============================================================
-# PANTALLA 1: EVALUAR PACIENTE (SÚPER INTUITIVA Y GUIADA)
+# PANTALLA 1: EVALUAR PACIENTE (LIMPIA Y BIEN DISTRIBUIDA)
 # ============================================================
 if pagina == "🏠 Evaluar Paciente":
-    st.markdown("#### Prueba rápida con un clic")
-    b1, b2, b3, b4, b5 = st.columns([1.05, 1.25, 1.0, 1.15, 0.85])
-    b1.button("🔴 Neumonía grave (5/5)", width="stretch", on_click=apply_preset, args=("grave",))
-    b2.button("🟡 Tomó paracetamol (oculta fiebre)", width="stretch", on_click=apply_preset, args=("paracetamol",))
-    b3.button("🟢 Resfrío común (1/5)", width="stretch", on_click=apply_preset, args=("resfrio",))
-    b4.button("⚡ Discrepancia (Rx vs Informe)", width="stretch", on_click=apply_preset, args=("discrepancia",))
-    b5.button("🧹 Limpiar todo", width="stretch", on_click=limpiar_formulario_cb, help="Reinicia todos los campos, radiografías y PDF")
+    b1, b2, b3, b4, b5 = st.columns(5)
+    b1.button("🔴 Grave (5/5)", width="stretch", on_click=apply_preset, args=("grave",), help="Ejemplo: 5/5 en Heckerling e informe definitivo")
+    b2.button("🟡 Paracetamol", width="stretch", on_click=apply_preset, args=("paracetamol",), help="Ejemplo: antipirético oculta fiebre, pero RF detecta riesgo")
+    b3.button("🟢 Resfrío (1/5)", width="stretch", on_click=apply_preset, args=("resfrio",), help="Ejemplo: cuadro viral leve e informe normal")
+    b4.button("⚡ Discrepancia", width="stretch", on_click=apply_preset, args=("discrepancia",), help="Ejemplo: Rx alta sospecha pero informe dice Sin neumonía")
+    b5.button("🧹 Limpiar", width="stretch", on_click=limpiar_formulario_cb, help="Deja todas las casillas en blanco y borra archivos")
 
-    st.markdown("<div style='height:0.35rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:0.3rem;'></div>", unsafe_allow_html=True)
 
-    col_form, col_result = st.columns([1.22, 1.0], gap="large")
+    col_form, col_result = st.columns([1.2, 1.0], gap="large")
     nonce = st.session_state.get("f_nonce", 0)
 
-    # ---------------- COLUMNA IZQUIERDA: RADIOGRAFÍA VISIBLE + 2 PESTAÑAS ----------------
+    # ---------------- COLUMNA IZQUIERDA: 3 PESTAÑAS LIMPIAS Y ENFOCADAS ----------------
     with col_form:
-        st.markdown("##### 🩻 Radiografía de tórax *(Red Neuronal CNN)*")
-        rx_c1, rx_c2 = st.columns(2)
-        with rx_c1:
-            rx_file = st.file_uploader("Subir radiografía actual (JPG, PNG o DICOM)", type=["jpg", "jpeg", "png", "dcm"], key=f"rx_actual_up_{nonce}")
-        with rx_c2:
-            rx_antigua = st.file_uploader("Radiografía antigua (opcional)", type=["jpg", "jpeg", "png", "dcm"], key=f"rx_antigua_up_{nonce}")
+        tab_rx, tab_ficha, tab_pdf = st.tabs(["🩻 1. Radiografía", "📋 2. Ficha Clínica", "📄 3. Informe PDF"])
 
-        if rx_file is not None or rx_antigua is not None:
-            p_c1, p_c2 = st.columns(2)
-            with p_c1:
-                if rx_file is not None:
-                    if rx_file.name.lower().endswith((".jpg", ".jpeg", ".png")):
-                        st.image(rx_file, caption=f"Rx actual: {rx_file.name}", width="stretch")
-                    else:
-                        st.info(f"Archivo DICOM cargado: {rx_file.name}")
-            with p_c2:
+        # ---- TAB 1: RADIOGRAFÍA ----
+        with tab_rx:
+            rx_file = st.file_uploader(
+                "Radiografía actual (JPG, PNG o DICOM)",
+                type=["jpg", "jpeg", "png", "dcm"],
+                key=f"rx_actual_up_{nonce}",
+            )
+            if rx_file is not None:
+                if rx_file.name.lower().endswith((".jpg", ".jpeg", ".png")):
+                    st.image(rx_file, caption=f"Rx actual: {rx_file.name}", width="stretch")
+                else:
+                    st.info(f"Archivo DICOM cargado: {rx_file.name}")
+
+            usar_slider_cnn = st.checkbox(
+                "Simular / ingresar % de Red Neuronal (CNN)",
+                key="f_usar_slider_cnn",
+                help="Mientras se conecta el archivo .keras/.pt de Sebastián, ingresa aquí el porcentaje de su CNN.",
+            )
+            cnn_manual_prob = None
+            if usar_slider_cnn:
+                cnn_pct = st.slider("Probabilidad CNN (%)", 0, 100, key="f_cnn_pct")
+                cnn_manual_prob = cnn_pct / 100.0
+
+            with st.expander("➕ Radiografía antigua (opcional)", expanded=False):
+                rx_antigua = st.file_uploader(
+                    "Subir radiografía previa para comparar",
+                    type=["jpg", "jpeg", "png", "dcm"],
+                    key=f"rx_antigua_up_{nonce}",
+                )
                 if rx_antigua is not None:
                     if rx_antigua.name.lower().endswith((".jpg", ".jpeg", ".png")):
                         st.image(rx_antigua, caption=f"Rx antigua: {rx_antigua.name}", width="stretch")
                     else:
                         st.info(f"Archivo DICOM antiguo: {rx_antigua.name}")
 
-        usar_slider_cnn = st.checkbox(
-            "Ingresar/simular porcentaje de la Red Neuronal (CNN)",
-            key="f_usar_slider_cnn",
-            help="Mientras se enchufa el archivo .keras/.pt de Sebastián, puedes ingresar el % que entrega su modelo en Colab.",
-        )
-        cnn_manual_prob = None
-        if usar_slider_cnn:
-            cnn_pct = st.slider("Probabilidad de la Red Neuronal (CNN) (%)", 0, 100, key="f_cnn_pct")
-            cnn_manual_prob = cnn_pct / 100.0
-
-        tab1, tab2 = st.tabs(["1️⃣ Ficha del Médico (Heckerling)", "2️⃣ Informe del Radiólogo (PDF / NLP)"])
-
-        with tab1:
-            # Identificación básica
-            id1, id2, id3, id4 = st.columns([1.45, 0.75, 0.85, 0.85])
+        # ---- TAB 2: FICHA CLÍNICA HECKERLING ----
+        with tab_ficha:
+            id1, id2, id3, id4 = st.columns([1.45, 0.8, 0.85, 0.85], vertical_alignment="bottom")
             with id1:
-                rut_val = st.text_input("RUT (ficticio)", key="f_rut", placeholder="Ej. 26455629-8")
+                rut_val = st.text_input("RUT", key="f_rut", placeholder="26455629-8")
             with id2:
-                st.markdown("<div style='height:1.72rem;'></div>", unsafe_allow_html=True)
-                st.button("🎲 Nuevo", width="stretch", on_click=generar_nuevo_rut_cb, help="Generar un RUT chileno ficticio válido")
+                st.button("🎲 RUT", width="stretch", on_click=generar_nuevo_rut_cb, help="Generar RUT chileno ficticio válido")
             with id3:
-                edad = st.number_input("Edad", min_value=18, max_value=105, step=1, placeholder="Ej. 45", key="f_edad")
+                edad = st.number_input("Edad", min_value=18, max_value=105, step=1, placeholder="45", key="f_edad")
             with id4:
-                sexo = st.selectbox("Sexo", ["F", "M"], placeholder="Elegir...", key="f_sexo")
+                sexo = st.selectbox("Sexo", ["F", "M"], placeholder="—", key="f_sexo")
 
-            # Criterios de ingreso (Sección A) compactos
-            with st.expander("📋 Criterios de ingreso al protocolo (Sección A — deben cumplirse los 3)", expanded=False):
-                ia1, ia2, ia3 = st.columns(3)
-                c_adulto = ia1.checkbox("18 años o más", value=(edad is not None and edad >= 18))
-                c_sint = ia2.checkbox("Síntoma resp. < 14 días o fiebre", value=True)
-                c_rx = ia3.checkbox("Se tomará radiografía (RxT)", value=True)
-                if not (c_adulto and c_sint and c_rx):
-                    st.warning("Según la ficha médica, si alguna respuesta es No, el paciente no entra al estudio Heckerling.")
-
-            st.markdown("##### C. Los 5 criterios del Puntaje de Heckerling *(1 punto por cada Sí)*")
+            st.markdown("**Puntaje de Heckerling** *(5 criterios)*")
             h1, h2 = st.columns(2)
             with h1:
-                temperatura = st.number_input("1. Temperatura axilar (°C) — suma si > 37,8", min_value=35.0, max_value=42.0, step=0.1, placeholder="Ej. 37.5", key="f_temperatura")
-                crepitantes = st.checkbox("3. Crepitaciones al auscultar", key="f_crepitantes", help="Ruidos cortos tipo velcro que no desaparecen al toser")
-                asma = st.checkbox("5. Tiene diagnóstico de Asma *(NO tener asma suma 1 pt)*", key="f_asma")
+                temperatura = st.number_input("Temperatura (°C)", min_value=35.0, max_value=42.0, step=0.1, placeholder="37.5", key="f_temperatura", help="Suma 1 punto si es > 37,8 °C (axilar)")
+                crepitantes = st.checkbox("Crepitaciones", key="f_crepitantes", help="Ruidos cortos tipo velcro que no desaparecen al toser (+1 pt)")
+                asma = st.checkbox("Tiene asma", key="f_asma", help="NO tener asma suma 1 punto en Heckerling")
             with h2:
-                frecuencia_cardiaca = st.number_input("2. Frecuencia cardíaca (lpm) — suma si > 100", min_value=40, max_value=180, step=1, placeholder="Ej. 90", key="f_frecuencia_cardiaca")
-                murmullo_disminuido = st.checkbox("4. Murmullo disminuido localizado", key="f_murmullo_disminuido", help="El aire se escucha entrar menos en una zona")
+                frecuencia_cardiaca = st.number_input("Frec. cardíaca (lpm)", min_value=40, max_value=180, step=1, placeholder="90", key="f_frecuencia_cardiaca", help="Suma 1 punto si es > 100 lpm")
+                murmullo_disminuido = st.checkbox("Murmullo disminuido", key="f_murmullo_disminuido", help="Aire disminuido en una zona pulmonar (+1 pt)")
 
-            # Cálculo inmediato del Puntaje Heckerling para mostrar medidor vivo ahí mismo
             if temperatura is not None and frecuencia_cardiaca is not None:
                 pt_heck = (
                     int(temperatura > 37.8)
@@ -504,8 +581,7 @@ if pagina == "🏠 Evaluar Paciente":
                 st.markdown(
                     f"""
                 <div class="heck-banner">
-                    <b>Puntaje de Heckerling actual: {pt_heck} / 5</b> · <span>{ref_h['zona']}</span><br>
-                    <small style="color:#334155;">{ref_h['detalle']}</small>
+                    <b>Heckerling: {pt_heck} / 5</b> · {ref_h['zona']}
                 </div>
                 """,
                     unsafe_allow_html=True,
@@ -514,60 +590,64 @@ if pagina == "🏠 Evaluar Paciente":
                 st.markdown(
                     """
                 <div class="heck-banner" style="background:#f8fafc;border-color:#cbd5e1;border-left-color:#94a3b8;">
-                    <b>Puntaje de Heckerling: pendiente</b><br>
-                    <small style="color:#475569;">Ingresa Temperatura y Frecuencia cardíaca para calcular el puntaje (0 a 5).</small>
+                    <b>Heckerling: pendiente</b> · <small>Ingresa Temp. y FC</small>
                 </div>
                 """,
                     unsafe_allow_html=True,
                 )
 
-            st.markdown("##### D. Datos adicionales clave del médico *(complementan a Heckerling)*")
+            st.markdown("**Signos y datos complementarios**")
             d1, d2, d3 = st.columns(3)
             with d1:
-                sat_o2 = st.number_input("Saturación O₂ (%)", min_value=60.0, max_value=100.0, step=1.0, placeholder="Ej. 96", key="f_sat_o2")
+                sat_o2 = st.number_input("SatO₂ (%)", min_value=60.0, max_value=100.0, step=1.0, placeholder="96", key="f_sat_o2", help="Saturación de oxígeno sin oxígeno suplementario")
             with d2:
-                fr = st.number_input("Frec. Respiratoria (rpm)", min_value=8, max_value=55, step=1, placeholder="Ej. 20", key="f_frecuencia_respiratoria")
+                fr = st.number_input("FR (rpm)", min_value=8, max_value=55, step=1, placeholder="20", key="f_frecuencia_respiratoria", help="Respiraciones por minuto")
             with d3:
-                dias_evol = st.number_input("Días con síntomas", min_value=1, max_value=14, step=1, placeholder="Ej. 3", key="f_dias_evolucion")
+                dias_evol = st.number_input("Días síntomas", min_value=1, max_value=14, step=1, placeholder="3", key="f_dias_evolucion")
 
             ex1, ex2, ex3 = st.columns(3)
             with ex1:
-                rinorrea = st.checkbox("Rinorrea / dolor garganta", key="f_rinorrea_odinofagia", help="Apunta a resfrío viral (en contra de neumonía)")
+                rinorrea = st.checkbox("Rinorrea / garganta", key="f_rinorrea_odinofagia", help="Apunta a resfrío viral (baja sospecha de neumonía)")
             with ex2:
-                antipiretico = st.checkbox("Tomó antipirético (≤ 6 h)", key="f_antipiretico_6h", help="Paracetamol/ibuprofeno puede esconder la fiebre")
+                antipiretico = st.checkbox("Antipirético ≤ 6 h", key="f_antipiretico_6h", help="Paracetamol/ibuprofeno puede esconder la fiebre")
             with ex3:
-                conciencia = st.checkbox("Compromiso conciencia", key="f_compromiso_conciencia", help="Glasgow < 15 o desorientación nueva")
+                conciencia = st.checkbox("Confusión mental", key="f_compromiso_conciencia", help="Glasgow < 15 o desorientación nueva")
 
-            with st.expander("➕ Enfermedades previas (Sección B) y signos poco frecuentes (Matidez / Egofonía / Soplo)", expanded=False):
-                st.caption("Marca solo si están presentes en el paciente:")
+            with st.expander("➕ Más datos (criterios ingreso, antecedentes y signos raros)", expanded=False):
+                ia1, ia2, ia3 = st.columns(3)
+                c_adulto = ia1.checkbox("≥ 18 años", value=(edad is not None and edad >= 18))
+                c_sint = ia2.checkbox("Síntomas < 14 días", value=True)
+                c_rx = ia3.checkbox("Con RxT", value=True)
+                if not (c_adulto and c_sint and c_rx):
+                    st.warning("Fuera de los 3 criterios de ingreso del protocolo Heckerling.")
+
                 b_col1, b_col2 = st.columns(2)
                 with b_col1:
-                    st.markdown("**Enfermedades previas**")
+                    st.markdown("**Antecedentes**")
                     epoc = st.checkbox("EPOC", key="f_epoc")
-                    otra_pulm = st.checkbox("Otra enf. pulmonar (fibrosis/TBC/cáncer)", key="f_otra_enf_pulmonar")
-                    icc = st.checkbox("Insuficiencia cardíaca (ICC)", key="f_insuficiencia_cardiaca")
+                    otra_pulm = st.checkbox("Otra enf. pulmonar", key="f_otra_enf_pulmonar")
+                    icc = st.checkbox("Insuf. cardíaca (ICC)", key="f_insuficiencia_cardiaca")
                     inmuno = st.checkbox("Inmunosupresión", key="f_inmunosupresion")
                     demencia = st.checkbox("Demencia", key="f_demencia")
                 with b_col2:
-                    st.markdown("**Signos focales al examen físico**")
-                    matidez = st.checkbox("Matidez a la percusión", key="f_matidez")
+                    st.markdown("**Signos focales**")
+                    matidez = st.checkbox("Matidez", key="f_matidez")
                     egofonia = st.checkbox("Egofonía", key="f_egofonia")
                     soplo = st.checkbox("Soplo tubárico", key="f_soplo_tubarico")
 
-        with tab2:
+        # ---- TAB 3: INFORME PDF / NLP ----
+        with tab_pdf:
             modo_eval = st.radio(
-                "¿En qué momento estás evaluando al paciente?",
+                "Etapa clínica",
                 [
                     "Con informe del radiólogo (Doble Chequeo)",
                     "Antes del informe (Triage: Ficha + Radiografía)",
                 ],
                 key="f_modo",
-                horizontal=True,
             )
 
-            st.markdown("##### 📄 Informe del radiólogo en PDF *(Lectura NLP en 4 categorías)*")
             fuente_pdf = st.radio(
-                "¿Qué informe quieres analizar?",
+                "Informe PDF",
                 ["Informe de ejemplo", "Subir un PDF propio", "Sin informe por ahora"],
                 key="f_fuente_pdf",
                 horizontal=True,
@@ -583,24 +663,25 @@ if pagina == "🏠 Evaluar Paciente":
                     if st.session_state.get("f_pdf_file") not in opciones_pdf:
                         st.session_state["f_pdf_file"] = opciones_pdf[0]
                     pdf_name = st.selectbox(
-                        "Elige un informe de prueba",
+                        "Seleccionar informe",
                         opciones_pdf,
                         format_func=lambda fn: SAMPLE_PDF_LABELS.get(fn, fn),
                         key="f_pdf_file",
                     )
                     pdf_bytes = (SAMPLE_PDF_DIR / pdf_name).read_bytes()
             elif fuente_pdf == "Subir un PDF propio":
-                pdf_up = st.file_uploader("Selecciona tu archivo PDF", type=["pdf"], key=f"pdf_up_{nonce}")
+                pdf_up = st.file_uploader("Archivo PDF", type=["pdf"], key=f"pdf_up_{nonce}")
                 if pdf_up is not None:
                     pdf_bytes = pdf_up.getvalue()
                     pdf_name = pdf_up.name
 
-            texto_libre = st.text_area(
-                "O pega aquí el texto del informe (opcional)",
-                height=72,
-                key="f_texto_libre",
-                placeholder="Ej.: Consolidación homogénea en base derecha con broncograma aéreo...",
-            )
+            with st.expander("➕ Pegar texto manualmente (opcional)", expanded=False):
+                texto_libre = st.text_area(
+                    "Texto del informe",
+                    height=75,
+                    key="f_texto_libre",
+                    placeholder="Ej.: Consolidación homogénea en base derecha con broncograma aéreo...",
+                )
 
     # ---------------- EJECUCIÓN EN VIVO DE LOS 3 MOTORES ----------------
     ficha_completa = all(v is not None for v in (edad, sexo, temperatura, frecuencia_cardiaca, sat_o2, fr, dias_evol))
@@ -638,19 +719,19 @@ if pagina == "🏠 Evaluar Paciente":
             "clase_nlp": "Sin informe",
             "hallazgos": [],
             "palabras_clave": [],
-            "resumen": "No se adjuntó informe PDF.",
+            "resumen": "Sin informe PDF.",
         }
 
     hay_alguna_senal = (rf_res is not None) or (cnn_res["prob_cnn"] is not None) or bool(nlp_res.get("es_valido_paciente"))
 
-    # ---------------- COLUMNA DERECHA: VEREDICTO CLARO SIEMPRE VISIBLE ----------------
+    # ---------------- COLUMNA DERECHA: VEREDICTO CONCISO Y LIMPIO ----------------
     with col_result:
         if not hay_alguna_senal:
             st.markdown(
                 """
             <div class="verdict-box" style="background:#f8fafc;border-color:#cbd5e1;">
-                <div class="verdict-kicker">Formulario limpio · Listo para evaluar</div>
-                <div class="verdict-main" style="font-size:1.45rem;color:#334155;">Sin datos ingresados todavía</div>
+                <div class="verdict-kicker">Listo para evaluar</div>
+                <div class="verdict-main" style="font-size:1.4rem;color:#334155;">Sin datos ingresados</div>
             </div>
             """,
                 unsafe_allow_html=True,
@@ -666,37 +747,39 @@ if pagina == "🏠 Evaluar Paciente":
             )
 
             v_cls = {"ROJO": "verdict-red", "AMARILLO": "verdict-yellow", "VERDE": "verdict-green"}[fusion["prioridad"]]
+            conc = fusion["concordancia"]
+            conc_badge_cls = {"rojo": "badge-red", "amarillo": "badge-yellow", "verde": "badge-green", "azul": "badge-blue"}.get(conc["color"], "badge-gray")
+
             st.markdown(
                 f"""
             <div class="verdict-box {v_cls}">
-                <div class="verdict-kicker">Resultado Integrado NEUMOALERT · {fusion['modo_aplicado']}</div>
-                <div class="verdict-main">{fusion['prob_integrada']:.0%} &nbsp; {priority_badge(fusion['prioridad'])}</div>
-                <div class="verdict-text"><b>Recomendación:</b> {fusion['accion_sugerida']}</div>
+                <div class="verdict-kicker">{fusion['modo_aplicado']}</div>
+                <div class="verdict-main">
+                    {fusion['prob_integrada']:.0%}
+                    {priority_badge(fusion['prioridad'])}
+                    <span class="badge {conc_badge_cls}">{conc['estado']}</span>
+                </div>
+                <div class="verdict-text">{fusion['accion_sugerida']}</div>
             </div>
             """,
                 unsafe_allow_html=True,
             )
 
-            # Alerta clara de concordancia / discrepancia
-            conc = fusion["concordancia"]
+            # Mostrar alerta adicional solo cuando hay discrepancia importante
             if conc["color"] == "rojo":
-                st.error(f"**⚠️ {conc['estado']}:** {conc['mensaje']}")
-            elif conc["color"] == "amarillo":
-                st.warning(f"**🔎 {conc['estado']}:** {conc['mensaje']}")
-            elif conc["color"] == "verde":
-                st.success(f"**✅ {conc['estado']}:** {conc['mensaje']}")
-            else:
-                st.info(f"**ℹ️ {conc['estado']}:** {conc['mensaje']}")
+                st.error(f"⚠️ {conc['mensaje']}")
+            elif "DISCREPANCIA" in conc["estado"]:
+                st.warning(f"🔎 {conc['mensaje']}")
 
-            # 3 mini-tarjetas simples
+            # 3 mini-tarjetas limpias
             mc1, mc2, mc3 = st.columns(3)
             with mc1:
                 rf_num = f"{rf_res['prob_rf']:.0%}" if rf_res is not None else "—"
-                rf_sub = f"Heckerling: <b>{rf_res['heckerling']['puntaje']}/5</b>" if rf_res is not None else "Completa la ficha"
+                rf_sub = f"Heckerling <b>{rf_res['heckerling']['puntaje']}/5</b>" if rf_res is not None else "Pendiente"
                 st.markdown(
                     f"""
                 <div class="mini-card">
-                    <div class="mini-title">📋 Clínica (RF)</div>
+                    <div class="mini-title">📋 Clínica</div>
                     <div class="mini-num">{rf_num}</div>
                     <div class="mini-sub">{rf_sub}</div>
                 </div>
@@ -710,7 +793,7 @@ if pagina == "🏠 Evaluar Paciente":
                 <div class="mini-card">
                     <div class="mini-title">🩻 Radiografía</div>
                     <div class="mini-num">{cnn_str}</div>
-                    <div class="mini-sub">{"CNN real" if cnn_status["available"] else "Valor CNN (prueba)"}</div>
+                    <div class="mini-sub">{"CNN real" if cnn_status["available"] else "CNN prueba"}</div>
                 </div>
                 """,
                     unsafe_allow_html=True,
@@ -721,51 +804,56 @@ if pagina == "🏠 Evaluar Paciente":
                     f"""
                 <div class="mini-card">
                     <div class="mini-title">📄 Informe PDF</div>
-                    <div class="mini-num" style="font-size:1.18rem; padding-top:0.2rem;">{nlp_res['clase_nlp']}</div>
-                    <div class="mini-sub">Score NLP: <b>{nlp_str}</b></div>
+                    <div class="mini-num" style="font-size:1.12rem;">{nlp_res['clase_nlp']}</div>
+                    <div class="mini-sub">NLP: <b>{nlp_str}</b></div>
                 </div>
                 """,
                     unsafe_allow_html=True,
                 )
 
-            render_signal_bar(
-                rf_res["prob_rf"] if rf_res is not None else None,
-                cnn_res["prob_cnn"],
-                nlp_res["prob_nlp"] if (nlp_res.get("es_valido_paciente") and not nlp_res.get("es_antecedente_previo") and "Antes" not in modo_eval) else None,
-                fusion["prob_integrada"],
-            )
+            st.markdown("<div style='height:0.35rem;'></div>", unsafe_allow_html=True)
 
-            # Explicación en español cotidiano
-            with st.expander("💡 ¿Por qué dio este resultado? (Explicación clínica + palabras del PDF)", expanded=True):
+            # Detalle organizado en 2 pestañas limpias (sin muro de texto + gráficos a la vez)
+            rtab_g, rtab_d = st.tabs(["📊 Gráfico", "💡 Explicación y PDF"])
+
+            with rtab_g:
+                render_signal_bar(
+                    rf_res["prob_rf"] if rf_res is not None else None,
+                    cnn_res["prob_cnn"],
+                    nlp_res["prob_nlp"] if (nlp_res.get("es_valido_paciente") and not nlp_res.get("es_antecedente_previo") and "Antes" not in modo_eval) else None,
+                    fusion["prob_integrada"],
+                )
+
+            with rtab_d:
                 if rf_res is not None:
                     exp = rf_res["explicacion"]
                     if exp["a_favor"]:
-                        st.markdown("**Señales a favor de sospecha:** " + " · ".join(exp["a_favor"][:5]))
+                        st.markdown("**A favor:** " + " · ".join(exp["a_favor"][:4]))
                     if exp["en_contra"]:
-                        st.markdown("**Señales en contra de neumonía:** " + " · ".join(exp["en_contra"]))
+                        st.markdown("**En contra:** " + " · ".join(exp["en_contra"][:3]))
                     for nota in exp["notas"]:
                         st.info(nota)
                 else:
-                    st.caption("Completa la ficha clínica (edad, sexo y signos vitales) para incluir el análisis del Random Forest.")
+                    st.caption("Completa la ficha clínica para ver el detalle del Random Forest.")
 
                 if nlp_res.get("tipo_documento") == "PROTOCOLO O GUÍA CLÍNICA":
-                    st.warning("📄 El PDF cargado es una guía médica teórica, no un informe de paciente (filtrado automáticamente).")
+                    st.warning("📄 Guía médica general detectada (filtrada automáticamente).")
                 elif nlp_res.get("palabras_clave"):
-                    st.markdown("**Palabras clave detectadas en el informe PDF:**")
+                    st.markdown("**Palabras clave del PDF:**")
                     render_keyword_chips(nlp_res["palabras_clave"])
 
-            if nlp_res.get("hallazgos"):
-                with st.expander(f"🔎 Ver frases exactas leídas del PDF ({pdf_name or 'texto'})", expanded=False):
-                    df_h = pd.DataFrame(
-                        [
-                            {"Categoría": h["estado"], "Palabras clave": ", ".join(h["palabras_clave"]) or "—", "Frase": h["oracion"]}
-                            for h in nlp_res["hallazgos"]
-                        ]
-                    )
-                    st.dataframe(df_h, width="stretch", hide_index=True)
+                if nlp_res.get("hallazgos"):
+                    with st.expander(f"🔎 Ver frases del PDF ({pdf_name or 'texto'})", expanded=False):
+                        df_h = pd.DataFrame(
+                            [
+                                {"Categoría": h["estado"], "Palabras clave": ", ".join(h["palabras_clave"]) or "—", "Frase": h["oracion"]}
+                                for h in nlp_res["hallazgos"]
+                            ]
+                        )
+                        st.dataframe(df_h, width="stretch", hide_index=True)
 
             # Guardar en base de datos
-            if st.button("💾 Guardar paciente en la Cola de Urgencias", type="primary", width="stretch"):
+            if st.button("💾 Guardar en Urgencias", type="primary", width="stretch"):
                 rut_clean = rut_val.strip().upper().replace(".", "")
                 if not ficha_completa:
                     st.warning("Completa primero todos los datos de la ficha clínica (edad, sexo y signos vitales) antes de guardar.")
@@ -945,10 +1033,9 @@ elif pagina == "🚨 Cola de Urgencias y Alertas":
                 )
                 pend = ta[ta["estado_alerta"].isin(["Pendiente", "Enviada"])]
                 if not pend.empty:
-                    u1, u2, u3 = st.columns([1.0, 1.2, 1.0])
+                    u1, u2, u3 = st.columns([1.0, 1.2, 1.0], vertical_alignment="bottom")
                     aid = u1.selectbox("Elegir alerta (ID)", pend["id_x"].tolist())
                     nest = u2.selectbox("Cambiar estado a", ["Revisada", "Cerrada", "Enviada", "Pendiente"])
-                    u3.markdown("<div style='height:1.72rem;'></div>", unsafe_allow_html=True)
                     if u3.button("✅ Actualizar alerta", type="primary", width="stretch"):
                         with engine.begin() as conn:
                             conn.execute(alertas.update().where(alertas.c.id == int(aid)).values(estado_alerta=nest))
@@ -969,12 +1056,14 @@ elif pagina == "🩻 Historial y Radiólogo":
         p = df_p[df_p["id"] == rut_sel].iloc[0]
 
         st.markdown(f"#### Paciente `{rut_sel}` &nbsp; {priority_badge(str(p['prioridad']))}", unsafe_allow_html=True)
-        m1, m2, m3, m4, m5, m6 = st.columns(6)
-        m1.metric("Heckerling", f"{int(p['puntaje_heckerling'])} / 5")
-        m2.metric("SatO₂", f"{p['sat_o2']:.0f}%")
-        m3.metric("Temp.", f"{p['temperatura']:.1f} °C")
-        m4.metric("FC / FR", f"{int(p['frecuencia_cardiaca'])} / {int(p['frecuencia_respiratoria'])}")
-        m5.metric("Combinado", f"{p['prob_integrada']:.0%}" if pd.notna(p["prob_integrada"]) else "—")
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Puntaje Heckerling", f"{int(p['puntaje_heckerling'])} / 5")
+        m2.metric("Saturación O₂", f"{p['sat_o2']:.0f}%")
+        m3.metric("Temperatura", f"{p['temperatura']:.1f} °C")
+
+        m4, m5, m6 = st.columns(3)
+        m4.metric("FC / FR", f"{int(p['frecuencia_cardiaca'])} lpm / {int(p['frecuencia_respiratoria'])} rpm")
+        m5.metric("Resultado Combinado", f"{p['prob_integrada']:.0%}" if pd.notna(p["prob_integrada"]) else "—")
         m6.metric("Informe (NLP)", str(p["categoria_rx_nlp"] or "Sin informe"))
 
         with engine.connect() as conn:
@@ -1116,7 +1205,13 @@ elif pagina == "📊 Modelos IA y Resultados":
                 color_discrete_sequence=["#94a3b8", "#38bdf8", "#0f4c75"],
                 title="Comparación en el mismo conjunto de prueba no visto (Test Set)",
             )
-            fig_comp.update_layout(yaxis=dict(range=[0, 108], title="%"), legend_title_text="Modelo", height=340)
+            fig_comp.update_layout(
+                yaxis=dict(range=[0, 112], title="%", automargin=True),
+                xaxis=dict(automargin=True),
+                legend=dict(orientation="h", yanchor="top", y=-0.22, xanchor="center", x=0.5, title_text=""),
+                height=380,
+                margin=dict(l=10, r=10, t=45, b=70),
+            )
             st.plotly_chart(fig_comp, width="stretch")
 
             # Métricas explicadas en español simple
@@ -1134,7 +1229,7 @@ elif pagina == "📊 Modelos IA y Resultados":
                     title="Variables más influyentes del Random Forest",
                     color="importance", color_continuous_scale="Teal",
                 )
-                fig_fi.update_layout(yaxis=dict(autorange="reversed"), coloraxis_showscale=False, height=360)
+                fig_fi.update_layout(yaxis=dict(autorange="reversed", automargin=True), xaxis=dict(automargin=True), coloraxis_showscale=False, height=380, margin=dict(l=10, r=15, t=45, b=30))
                 st.plotly_chart(fig_fi, width="stretch")
 
             with g_cm:
@@ -1145,7 +1240,7 @@ elif pagina == "📊 Modelos IA y Resultados":
                     title="Matriz de Confusión (Random Forest)",
                     labels=dict(x="Predicción del modelo", y="Realidad en RxT"),
                 )
-                fig_cm.update_layout(height=360)
+                fig_cm.update_layout(xaxis=dict(automargin=True), yaxis=dict(automargin=True), height=380, margin=dict(l=10, r=10, t=45, b=30))
                 st.plotly_chart(fig_cm, width="stretch")
 
         with t2:
@@ -1161,10 +1256,10 @@ elif pagina == "📊 Modelos IA y Resultados":
                     nlpm["confusion_matrix"], text_auto=True,
                     x=nlpm["classes"], y=nlpm["classes"],
                     color_continuous_scale="Teal",
-                    title="Matriz de Confusión 4×4 (0 errores graves Sin neumonía ↔ Definitiva)",
+                    title="Matriz de Confusión 4×4",
                     labels=dict(x="Predicción NLP", y="Etiqueta real"),
                 )
-                fig_nm.update_layout(height=360)
+                fig_nm.update_layout(xaxis=dict(automargin=True), yaxis=dict(automargin=True), height=370, margin=dict(l=10, r=10, t=45, b=30))
                 st.plotly_chart(fig_nm, width="stretch")
 
             with c_t:
@@ -1175,7 +1270,7 @@ elif pagina == "📊 Modelos IA y Resultados":
                     title=f"Frases clave para '{cls_sel}'",
                     color="peso", color_continuous_scale="Blues",
                 )
-                fig_terms.update_layout(yaxis=dict(autorange="reversed"), coloraxis_showscale=False, height=320)
+                fig_terms.update_layout(yaxis=dict(autorange="reversed", automargin=True), xaxis=dict(automargin=True), coloraxis_showscale=False, height=330, margin=dict(l=10, r=15, t=45, b=30))
                 st.plotly_chart(fig_terms, width="stretch")
 
         with t3:
